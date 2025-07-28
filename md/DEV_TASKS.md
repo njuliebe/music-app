@@ -18,6 +18,16 @@
     *   3.1: 根据后端规范，创建Dart数据模型 (`Song`, `Playlist`, `Artist` 等)。
     *   3.2: 创建一个API服务类 (e.g., `ApiService`)，使用 `dio` 封装网络请求。
     *   3.3: **(关键)** 创建一个音乐仓库 (`MusicRepository`)，它将作为UI层和数据层之间的桥梁。初期可以先用**模拟数据 (Mock Data)** 实现，以便UI开发可以先行。
+    *   3.4 已有后端接口，接口格式为
+        ```
+        curl --location 'http://216.24.179.28:8001/music/search' \
+        --header 'Content-Type: application/json' \
+        --header 'Authorization: Bearer 123567' \
+        --data '{
+            "keyword":"枫"
+        }'
+        ```
+        keyword为搜索关键词
 
 *   **任务 4: 搜索功能**
     *   4.1: 开发搜索页面UI，包含一个搜索输入框和用于展示结果的列表。
