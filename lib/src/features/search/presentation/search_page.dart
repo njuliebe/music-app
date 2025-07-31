@@ -27,16 +27,6 @@ class _SearchPageState extends ConsumerState<SearchPage> {
   String _searchQuery = '';
 
   @override
-  void initState() {
-    super.initState();
-    _searchController.addListener(() {
-      setState(() {
-        _searchQuery = _searchController.text;
-      });
-    });
-  }
-
-  @override
   void dispose() {
     _searchController.dispose();
     super.dispose();
@@ -46,7 +36,7 @@ class _SearchPageState extends ConsumerState<SearchPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Search'),
+        title: const Text('Search'),
       ),
       body: Column(
         children: [
@@ -60,32 +50,59 @@ class _SearchPageState extends ConsumerState<SearchPage> {
   }
 
   Widget _buildSearchBar() {
+    final theme = Theme.of(context);
     return Padding(
       padding: const EdgeInsets.all(16.0),
-      child: TextField(
-        controller: _searchController,
-        decoration: InputDecoration(
-          hintText: 'Search for songs, artists, etc.',
-          prefixIcon: Icon(Icons.search),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(8.0),
-            borderSide: BorderSide.none,
+      child: Row(
+        children: [
+          Expanded(
+            child: TextField(
+              controller: _searchController,
+              decoration: InputDecoration(
+                hintText: 'Search for songs, artists, etc.',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8.0),
+                  borderSide: BorderSide.none,
+                ),
+                filled: true,
+                fillColor: theme.colorScheme.surface,
+              ),
+              style: TextStyle(color: theme.colorScheme.onSurface),
+              onSubmitted: (query) {
+                setState(() {
+                  _searchQuery = query;
+                });
+              },
+            ),
           ),
-          filled: true,
-          fillColor: Colors.grey[200],
-        ),
+          const SizedBox(width: 8),
+          ElevatedButton(
+            onPressed: () {
+              FocusScope.of(context).unfocus();
+              setState(() {
+                _searchQuery = _searchController.text;
+              });
+            },
+            child: const Text('Search'),
+          ),
+        ],
       ),
     );
   }
 
   // 3. 修改 _buildSearchResults 以使用 FutureProvider
   Widget _buildSearchResults() {
+    if (_searchQuery.isEmpty) {
+      return const Center(
+        child: Text('Enter a query to search for songs.'),
+      );
+    }
     final searchResults = ref.watch(searchResultsProvider(_searchQuery));
 
     return searchResults.when(
       data: (songs) {
         if (songs.isEmpty) {
-          return Center(
+          return const Center(
             child: Text('No results found.'),
           );
         }
