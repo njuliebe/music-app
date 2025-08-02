@@ -10,7 +10,7 @@ class Song with _$Song {
     required String title,
     required String artist,
     required String href,
-    @JsonKey(name: 'play_url') required String playUrl,
+    @JsonKey(name: 'play_url') String? playUrl,
   }) = _Song;
 
   factory Song.fromJson(Map<String, dynamic> json) => _$SongFromJson(json);

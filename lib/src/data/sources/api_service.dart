@@ -24,4 +24,18 @@ class ApiService {
       return [];
     }
   }
+
+  Future<Map<String, dynamic>> getSongDetail(String href) async {
+    try {
+      final response = await _dio.post(
+        '/music/detail',
+        data: {'href': href},
+      );
+      return response.data as Map<String, dynamic>;
+    } catch (e) {
+      // Handle error
+      print('Error getting song detail: $e');
+      return {};
+    }
+  }
 }

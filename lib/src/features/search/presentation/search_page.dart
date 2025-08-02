@@ -6,13 +6,14 @@ import 'package:music_app/src/data/providers.dart';
 import 'package:music_app/src/features/player/presentation/player_page.dart';
 
 // 1. 创建一个 FutureProvider，用于搜索歌曲
-final searchResultsProvider = FutureProvider.autoDispose.family<List<Song>, String>((ref, query) async {
-  if (query.isEmpty) {
-    return [];
-  }
-  final musicRepository = ref.watch(musicRepositoryProvider);
-  return musicRepository.searchSongs(query);
-});
+final searchResultsProvider = FutureProvider.autoDispose
+    .family<List<Song>, String>((ref, query) async {
+      if (query.isEmpty) {
+        return [];
+      }
+      final musicRepository = ref.watch(musicRepositoryProvider);
+      return musicRepository.searchSongs(query);
+    });
 
 // 2. 将 SearchPage 转换为 ConsumerStatefulWidget
 class SearchPage extends ConsumerStatefulWidget {
@@ -35,16 +36,9 @@ class _SearchPageState extends ConsumerState<SearchPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Search'),
-      ),
+      appBar: AppBar(title: const Text('Search')),
       body: Column(
-        children: [
-          _buildSearchBar(),
-          Expanded(
-            child: _buildSearchResults(),
-          ),
-        ],
+        children: [_buildSearchBar(), Expanded(child: _buildSearchResults())],
       ),
     );
   }
@@ -93,18 +87,14 @@ class _SearchPageState extends ConsumerState<SearchPage> {
   // 3. 修改 _buildSearchResults 以使用 FutureProvider
   Widget _buildSearchResults() {
     if (_searchQuery.isEmpty) {
-      return const Center(
-        child: Text('Enter a query to search for songs.'),
-      );
+      return const Center(child: Text('Enter a query to search for songs.'));
     }
     final searchResults = ref.watch(searchResultsProvider(_searchQuery));
 
     return searchResults.when(
       data: (songs) {
         if (songs.isEmpty) {
-          return const Center(
-            child: Text('No results found.'),
-          );
+          return const Center(child: Text('No results found.'));
         }
         return ListView.builder(
           itemCount: songs.length,
@@ -113,21 +103,46 @@ class _SearchPageState extends ConsumerState<SearchPage> {
             return ListTile(
               title: Text(song.title),
               subtitle: Text(song.artist),
-              onTap: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (context) => PlayerPage(song: song),
-                  ),
-                );
+              onTap: () async {
+                if (song.playUrl != null && song.playUrl!.isNotEmpty) {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => PlayerPage(song: song),
+                    ),
+                  );
+                } else {
+                  showDialog(
+                    context: context,
+                    barrierDismissible: false,
+                    builder:
+                        (context) =>
+                            const Center(child: CircularProgressIndicator()),
+                  );
+                  try {
+                    final musicRepository = ref.read(musicRepositoryProvider);
+                    final detailedSong = await musicRepository.getSongDetail(
+                      song,
+                    );
+                    Navigator.of(context).pop(); // Close the loading indicator
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (context) => PlayerPage(song: detailedSong),
+                      ),
+                    );
+                  } catch (e) {
+                    Navigator.of(context).pop(); // Close the loading indicator
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Failed to load song: $e')),
+                    );
+                  }
+                }
               },
             );
           },
         );
       },
       loading: () => const Center(child: CircularProgressIndicator()),
-      error: (error, stackTrace) => Center(
-        child: Text('Error: $error'),
-      ),
+      error: (error, stackTrace) => Center(child: Text('Error: $error')),
     );
   }
 }

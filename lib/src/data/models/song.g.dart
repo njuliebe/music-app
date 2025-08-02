@@ -11,7 +11,7 @@ _$SongImpl _$$SongImplFromJson(Map<String, dynamic> json) => _$SongImpl(
       title: json['title'] as String,
       artist: json['artist'] as String,
       href: json['href'] as String,
-      playUrl: json['play_url'] as String,
+      playUrl: json['play_url'] as String?,
     );
 
 Map<String, dynamic> _$$SongImplToJson(_$SongImpl instance) =>

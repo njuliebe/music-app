@@ -22,7 +22,10 @@ class _PlayerPageState extends State<PlayerPage> {
 
   Future<void> _initAudioPlayer() async {
     try {
-      await _audioPlayer.setUrl(widget.song.playUrl);
+      if (widget.song.playUrl == null || widget.song.playUrl!.isEmpty) {
+        throw Exception('音频链接为空');
+      }
+      await _audioPlayer.setUrl(widget.song.playUrl!);
       _audioPlayer.play();
     } catch (e) {
       // Handle error
@@ -39,9 +42,7 @@ class _PlayerPageState extends State<PlayerPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.song.title),
-      ),
+      appBar: AppBar(title: Text(widget.song.title)),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,

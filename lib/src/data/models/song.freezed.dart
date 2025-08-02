@@ -25,7 +25,7 @@ mixin _$Song {
   String get artist => throw _privateConstructorUsedError;
   String get href => throw _privateConstructorUsedError;
   @JsonKey(name: 'play_url')
-  String get playUrl => throw _privateConstructorUsedError;
+  String? get playUrl => throw _privateConstructorUsedError;
 
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
   @JsonKey(ignore: true)
@@ -42,7 +42,7 @@ abstract class $SongCopyWith<$Res> {
       String title,
       String artist,
       String href,
-      @JsonKey(name: 'play_url') String playUrl});
+      @JsonKey(name: 'play_url') String? playUrl});
 }
 
 /// @nodoc
@@ -62,7 +62,7 @@ class _$SongCopyWithImpl<$Res, $Val extends Song>
     Object? title = null,
     Object? artist = null,
     Object? href = null,
-    Object? playUrl = null,
+    Object? playUrl = freezed,
   }) {
     return _then(_value.copyWith(
       id: null == id
@@ -81,10 +81,10 @@ class _$SongCopyWithImpl<$Res, $Val extends Song>
           ? _value.href
           : href // ignore: cast_nullable_to_non_nullable
               as String,
-      playUrl: null == playUrl
+      playUrl: freezed == playUrl
           ? _value.playUrl
           : playUrl // ignore: cast_nullable_to_non_nullable
-              as String,
+              as String?,
     ) as $Val);
   }
 }
@@ -101,7 +101,7 @@ abstract class _$$SongImplCopyWith<$Res> implements $SongCopyWith<$Res> {
       String title,
       String artist,
       String href,
-      @JsonKey(name: 'play_url') String playUrl});
+      @JsonKey(name: 'play_url') String? playUrl});
 }
 
 /// @nodoc
@@ -118,7 +118,7 @@ class __$$SongImplCopyWithImpl<$Res>
     Object? title = null,
     Object? artist = null,
     Object? href = null,
-    Object? playUrl = null,
+    Object? playUrl = freezed,
   }) {
     return _then(_$SongImpl(
       id: null == id
@@ -137,10 +137,10 @@ class __$$SongImplCopyWithImpl<$Res>
           ? _value.href
           : href // ignore: cast_nullable_to_non_nullable
               as String,
-      playUrl: null == playUrl
+      playUrl: freezed == playUrl
           ? _value.playUrl
           : playUrl // ignore: cast_nullable_to_non_nullable
-              as String,
+              as String?,
     ));
   }
 }
@@ -153,7 +153,7 @@ class _$SongImpl implements _Song {
       required this.title,
       required this.artist,
       required this.href,
-      @JsonKey(name: 'play_url') required this.playUrl});
+      @JsonKey(name: 'play_url') this.playUrl});
 
   factory _$SongImpl.fromJson(Map<String, dynamic> json) =>
       _$$SongImplFromJson(json);
@@ -168,7 +168,7 @@ class _$SongImpl implements _Song {
   final String href;
   @override
   @JsonKey(name: 'play_url')
-  final String playUrl;
+  final String? playUrl;
 
   @override
   String toString() {
@@ -212,7 +212,7 @@ abstract class _Song implements Song {
       required final String title,
       required final String artist,
       required final String href,
-      @JsonKey(name: 'play_url') required final String playUrl}) = _$SongImpl;
+      @JsonKey(name: 'play_url') final String? playUrl}) = _$SongImpl;
 
   factory _Song.fromJson(Map<String, dynamic> json) = _$SongImpl.fromJson;
 
@@ -226,7 +226,7 @@ abstract class _Song implements Song {
   String get href;
   @override
   @JsonKey(name: 'play_url')
-  String get playUrl;
+  String? get playUrl;
   @override
   @JsonKey(ignore: true)
   _$$SongImplCopyWith<_$SongImpl> get copyWith =>
