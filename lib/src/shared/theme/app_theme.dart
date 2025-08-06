@@ -24,15 +24,15 @@ class AppTheme {
       seedColor: Colors.deepPurple,
       brightness: Brightness.dark,
     ),
-    scaffoldBackgroundColor: Colors.black,
+    scaffoldBackgroundColor: const Color(0xFF121212), // A more visually appealing dark color
     appBarTheme: const AppBarTheme(
-      backgroundColor: Colors.black,
+      backgroundColor: Color(0xFF121212), // Consistent with scaffold background
       elevation: 0,
       iconTheme: IconThemeData(color: Colors.white),
       titleTextStyle: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
     ),
     bottomNavigationBarTheme: const BottomNavigationBarThemeData(
-      backgroundColor: Colors.black,
+      backgroundColor: Color(0xFF121212), // Consistent with other surfaces
       selectedItemColor: Colors.white,
       unselectedItemColor: Colors.grey,
     ),
