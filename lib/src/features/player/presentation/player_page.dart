@@ -1,23 +1,29 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:music_app/src/data/models/song.dart';
+import 'package:music_app/src/features/lyrics/data/lyric_repository.dart';
+import 'package:music_app/src/features/lyrics/domain/lyric.dart';
 
-class PlayerPage extends StatefulWidget {
+class PlayerPage extends ConsumerStatefulWidget {
   const PlayerPage({super.key, required this.song});
 
   final Song song;
 
   @override
-  State<PlayerPage> createState() => _PlayerPageState();
+  ConsumerState<PlayerPage> createState() => _PlayerPageState();
 }
 
-class _PlayerPageState extends State<PlayerPage> {
+class _PlayerPageState extends ConsumerState<PlayerPage> {
   final AudioPlayer _audioPlayer = AudioPlayer();
+  String? _lyrics;
+  bool _isLoadingLyrics = true;
 
   @override
   void initState() {
     super.initState();
     _initAudioPlayer();
+    _searchLyrics();
   }
 
   Future<void> _initAudioPlayer() async {
@@ -33,6 +39,39 @@ class _PlayerPageState extends State<PlayerPage> {
     }
   }
 
+  Future<void> _searchLyrics() async {
+    try {
+      final lyrics = await ref
+          .read(lyricRepositoryProvider)
+          .searchLyrics(widget.song.title);
+      if (mounted) {
+        setState(() {
+          if (lyrics.isNotEmpty) {
+            _lyrics =
+                lyrics
+                    .firstWhere(
+                      (lyric) =>
+                          lyric.name == widget.song.title &&
+                          lyric.artistName == widget.song.artist,
+                      orElse: () => Lyric.fromJson({}),
+                    )
+                    .syncedLyrics;
+          } else {
+            _lyrics = 'No lyrics found.';
+          }
+          _isLoadingLyrics = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _lyrics = 'Failed to load lyrics.';
+          _isLoadingLyrics = false;
+        });
+      }
+    }
+  }
+
   @override
   void dispose() {
     _audioPlayer.dispose();
@@ -43,22 +82,50 @@ class _PlayerPageState extends State<PlayerPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text(widget.song.title)),
-      body: Center(
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
           children: [
+            // Top: Song Info
             Text(
               widget.song.title,
               style: Theme.of(context).textTheme.headlineSmall,
+              textAlign: TextAlign.center,
             ),
             const SizedBox(height: 8),
             Text(
               widget.song.artist,
               style: Theme.of(context).textTheme.bodyMedium,
+              textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 32),
+            const SizedBox(height: 24),
+
+            // Middle: Lyrics
+            Expanded(
+              child: _isLoadingLyrics
+                  ? const Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          CircularProgressIndicator(),
+                          SizedBox(height: 16),
+                          Text('歌词搜索中...'),
+                        ],
+                      ),
+                    )
+                  : SingleChildScrollView(
+                      child: Text(
+                        _lyrics ?? 'No lyrics available.',
+                        style: Theme.of(context).textTheme.bodyMedium,
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+            ),
+            const SizedBox(height: 24),
+
+            // Bottom: Player Controls
             _buildPlaybackControls(),
-            const SizedBox(height: 32),
+            const SizedBox(height: 16),
             _buildProgressBar(),
           ],
         ),
@@ -83,7 +150,7 @@ class _PlayerPageState extends State<PlayerPage> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             IconButton(
-              icon: Icon(Icons.skip_previous),
+              icon: const Icon(Icons.skip_previous),
               iconSize: 48.0,
               onPressed: () {
                 // TODO: Implement previous song logic
@@ -101,7 +168,7 @@ class _PlayerPageState extends State<PlayerPage> {
               },
             ),
             IconButton(
-              icon: Icon(Icons.skip_next),
+              icon: const Icon(Icons.skip_next),
               iconSize: 48.0,
               onPressed: () {
                 // TODO: Implement next song logic

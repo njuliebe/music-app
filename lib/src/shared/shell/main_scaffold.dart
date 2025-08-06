@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:music_app/src/features/home/presentation/home_page.dart';
 import 'package:music_app/src/features/library/presentation/library_page.dart';
+import 'package:music_app/src/features/lyrics/presentation/lyric_search_screen.dart';
 import 'package:music_app/src/features/search/presentation/search_page.dart';
 
 final pageIndexProvider = StateProvider<int>((ref) => 0);
@@ -12,6 +13,7 @@ class MainScaffold extends ConsumerWidget {
   final _pages = const [
     HomePage(),
     SearchPage(),
+    LyricSearchScreen(),
     LibraryPage(),
   ];
 

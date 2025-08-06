@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:music_app/src/data/models/song.dart';
 import 'package:music_app/src/data/providers.dart';
+import 'package:music_app/src/features/lyrics/data/lyric_repository.dart';
+import 'package:music_app/src/features/lyrics/domain/lyric.dart';
 
 import 'package:music_app/src/features/player/presentation/player_page.dart';
 
