@@ -13,7 +13,16 @@ class AppTheme {
       backgroundColor: Colors.white,
       elevation: 0,
       iconTheme: IconThemeData(color: Colors.black),
-      titleTextStyle: TextStyle(color: Colors.black, fontSize: 20, fontWeight: FontWeight.bold),
+      titleTextStyle: TextStyle(
+        color: Colors.black,
+        fontSize: 20,
+        fontWeight: FontWeight.bold,
+      ),
+    ),
+    bottomNavigationBarTheme: const BottomNavigationBarThemeData(
+      backgroundColor: Color(0xFF121212), // Consistent with other surfaces
+      selectedItemColor: Colors.black,
+      unselectedItemColor: Colors.grey,
     ),
   );
 
@@ -24,12 +33,18 @@ class AppTheme {
       seedColor: Colors.deepPurple,
       brightness: Brightness.dark,
     ),
-    scaffoldBackgroundColor: const Color(0xFF121212), // A more visually appealing dark color
+    scaffoldBackgroundColor: const Color(
+      0xFF121212,
+    ), // A more visually appealing dark color
     appBarTheme: const AppBarTheme(
       backgroundColor: Color(0xFF121212), // Consistent with scaffold background
       elevation: 0,
       iconTheme: IconThemeData(color: Colors.white),
-      titleTextStyle: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
+      titleTextStyle: TextStyle(
+        color: Colors.white,
+        fontSize: 20,
+        fontWeight: FontWeight.bold,
+      ),
     ),
     bottomNavigationBarTheme: const BottomNavigationBarThemeData(
       backgroundColor: Color(0xFF121212), // Consistent with other surfaces
