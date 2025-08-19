@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:music_app/src/data/models/playlist.dart';
-import 'package:music_app/src/features/playlist/presentation/pages/playlist_detail_page.dart';
+import 'package:music_app/src/features/library/presentation/pages/playlist_detail_page.dart';
 
 class PlaylistListItem extends StatelessWidget {
   const PlaylistListItem({super.key, required this.playlist});
@@ -21,7 +21,7 @@ class PlaylistListItem extends StatelessWidget {
           MaterialPageRoute(
             builder:
                 (context) => PlaylistDetailPage(
-                  playlistId: playlist.id?.toString() ?? '',
+                  playlistId: playlist.id ?? '',
                   playlistName: playlist.name,
                 ),
           ),

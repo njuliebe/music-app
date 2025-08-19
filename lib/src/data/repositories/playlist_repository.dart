@@ -2,6 +2,7 @@ import 'package:music_app/src/data/models/playlist_song.dart';
 import 'package:music_app/src/data/models/playlist.dart';
 import 'package:music_app/src/data/models/song.dart';
 import 'package:sqflite/sqflite.dart';
+import 'package:music_app/src/data/services/playlist_import_service.dart'; // Import ImportedPlaylist
 
 class PlaylistRepository {
   final Database _db;
@@ -15,45 +16,85 @@ class PlaylistRepository {
     });
   }
 
-  // Fetches the list of songs for a given playlist.
-  // In a real app, this would make a network or database request.
+  // Updated to use String playlistId
   Future<List<PlaylistSong>> getSongsForPlaylist(String playlistId) async {
-    // Simulate a network delay
-    await Future.delayed(const Duration(seconds: 1));
+    final List<Map<String, dynamic>> maps = await _db.rawQuery('''
+      SELECT s.* FROM songs s
+      INNER JOIN playlist_songs ps ON s.id = ps.song_id
+      WHERE ps.playlist_id = ?
+    ''', [playlistId]);
 
-    // Return a dummy list of songs for the given playlist
-    // In a real implementation, you would fetch this data based on playlistId
-    return [
-      PlaylistSong(
+    return List.generate(maps.length, (i) {
+      final song = Song.fromJson(maps[i]);
+      return PlaylistSong(
         playlistId: playlistId,
-        song: const Song(
-          id: '1',
-          title: 'Sample Song 1',
-          artist: 'Artist 1',
-          href: 'url1',
-          playUrl: 'url1',
-        ),
-      ),
-      PlaylistSong(
-        playlistId: playlistId,
-        song: const Song(
-          id: '2',
-          title: 'Sample Song 2',
-          artist: 'Artist 2',
-          href: 'url2',
-          playUrl: 'url2',
-        ),
-      ),
-      PlaylistSong(
-        playlistId: playlistId,
-        song: const Song(
-          id: '3',
-          title: 'Sample Song 3',
-          artist: 'Artist 3',
-          href: 'url3',
-          playUrl: 'url3',
-        ),
-      ),
-    ];
+        song: song,
+      );
+    });
+  }
+
+  // Updated to use String playlistId
+  Future<void> addSongToPlaylist(String playlistId, Song song) async {
+    await _db.insert(
+      'songs',
+      song.toJson(),
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+    await _db.insert('playlist_songs', {
+      'playlist_id': playlistId,
+      'song_id': song.id,
+    });
+  }
+
+  Future<void> removeSongFromPlaylist(String playlistId, String songId) async {
+    await _db.delete(
+      'playlist_songs',
+      where: 'playlist_id = ? AND song_id = ?',
+      whereArgs: [playlistId, songId],
+    );
+  }
+
+  // New method to save imported playlist and its songs
+  Future<void> saveImportedPlaylist(ImportedPlaylist importedPlaylist) async {
+    await _db.transaction((txn) async {
+      // 1. Save/Update the playlist itself
+      final playlist = Playlist(
+        id: importedPlaylist.id,
+        name: importedPlaylist.name,
+        type: PlaylistType.collected, // Assuming imported playlists are 'collected'
+        description: null, // No description from API
+        coverUrl: null, // No coverUrl from API
+        creator: 'Imported', // Default creator
+      );
+      await txn.insert(
+        'playlists',
+        playlist.toMap(),
+        conflictAlgorithm: ConflictAlgorithm.replace,
+      );
+
+      // 2. Clear existing songs for this playlist from playlist_songs junction table
+      await txn.delete(
+        'playlist_songs',
+        where: 'playlist_id = ?',
+        whereArgs: [importedPlaylist.id],
+      );
+
+      // 3. Save each song and link to the playlist
+      for (final song in importedPlaylist.songs) {
+        await txn.insert(
+          'songs',
+          song.toJson(),
+          conflictAlgorithm: ConflictAlgorithm.replace,
+        );
+        await txn.insert(
+          'playlist_songs',
+          {
+            'playlist_id': importedPlaylist.id,
+            'song_id': song.id,
+          },
+          conflictAlgorithm: ConflictAlgorithm.replace, // In case of re-importing same song
+        );
+      }
+    });
   }
 }

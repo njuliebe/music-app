@@ -1,7 +1,7 @@
 enum PlaylistType { created, collected }
 
 class Playlist {
-  final int? id;
+  final String id; // Changed to String and not nullable
   final String name;
   final String? description;
   final String? coverUrl;
@@ -9,7 +9,7 @@ class Playlist {
   final PlaylistType type;
 
   Playlist({
-    this.id,
+    required this.id, // Now required
     required this.name,
     this.description,
     this.coverUrl,
@@ -19,7 +19,7 @@ class Playlist {
 
   factory Playlist.fromMap(Map<String, dynamic> map) {
     return Playlist(
-      id: map['id'],
+      id: map['id'] as String, // Cast to String
       name: map['name'],
       description: map['description'],
       coverUrl: map['coverUrl'],

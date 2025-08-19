@@ -23,6 +23,12 @@ class LibraryPage extends ConsumerWidget {
               // TODO: 实现创建歌单功能
             },
           ),
+          IconButton( // New Import Button
+            icon: const Icon(Icons.cloud_download),
+            onPressed: () {
+              _showImportPlaylistDialog(context, ref);
+            },
+          ),
         ],
       ),
       body: playlistsAsyncValue.when(
@@ -69,6 +75,70 @@ class LibraryPage extends ConsumerWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
       child: Text(title, style: Theme.of(context).textTheme.titleMedium),
+    );
+  }
+
+  void _showImportPlaylistDialog(BuildContext context, WidgetRef ref) {
+    final TextEditingController _urlController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('导入歌单'),
+          content: TextField(
+            controller: _urlController,
+            decoration: const InputDecoration(
+              hintText: '请输入歌单链接',
+            ),
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('取消'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+            TextButton(
+              child: const Text('导入'),
+              onPressed: () async {
+                final String playlistUrl = _urlController.text;
+                if (playlistUrl.isNotEmpty) {
+                  Navigator.of(context).pop(); // Close dialog immediately
+
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('正在导入歌单...')),
+                  );
+
+                  try {
+                    final importService = ref.read(playlistImportServiceProvider);
+                    final playlistRepository = ref.read(playlistRepositoryProvider); // Assuming this provider exists
+
+                    final importedPlaylist = await importService.importPlaylist(playlistUrl);
+
+                    if (importedPlaylist != null) {
+                      await playlistRepository.saveImportedPlaylist(importedPlaylist);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('歌单 "${importedPlaylist.name}" 导入成功！')),
+                      );
+                      // Refresh the playlist list
+                      ref.invalidate(playlistsFutureProvider);
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('歌单导入失败：未获取到歌单数据。')),
+                      );
+                    }
+                  } catch (e) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('歌单导入失败: ${e.toString()}')),
+                    );
+                  }
+                }
+              },
+            ),
+          ],
+        );
+      },
     );
   }
 }

@@ -6,10 +6,8 @@ part 'playlist_song.g.dart';
 
 @freezed
 class PlaylistSong with _$PlaylistSong {
-  const factory PlaylistSong({
-    required String playlistId,
-    required Song song,
-  }) = _PlaylistSong;
+  const factory PlaylistSong({required String playlistId, required Song song}) =
+      _PlaylistSong;
 
   factory PlaylistSong.fromJson(Map<String, dynamic> json) =>
       _$PlaylistSongFromJson(json);

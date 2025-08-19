@@ -44,11 +44,11 @@ Future<void> main() async {
   // Open the database and prepare the instance
   final db = await openDatabase(
     join(await getDatabasesPath(), 'music_app.db'),
-    version: 1,
+    version: 3,
     onCreate: (db, version) async {
       await db.execute('''
-        CREATE TABLE playlists (
-          id INTEGER PRIMARY KEY AUTOINCREMENT,
+        CREATE TABLE IF NOT EXISTS playlists (
+          id TEXT PRIMARY KEY,
           name TEXT NOT NULL,
           description TEXT,
           coverUrl TEXT,
@@ -56,19 +56,55 @@ Future<void> main() async {
           type TEXT NOT NULL
         )
       ''');
-      // Insert sample data
-      await db.insert('playlists', {
-        'name': '我的最爱',
-        'description': '一些精选好歌',
-        'creator': 'Liebe',
-        'type': PlaylistType.created.name,
-      });
-      await db.insert('playlists', {
-        'name': '学习时听的歌',
-        'description': '专注 BGM',
-        'creator': 'Liebe',
-        'type': PlaylistType.created.name,
-      });
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS songs (
+          id TEXT PRIMARY KEY,
+          title TEXT NOT NULL,
+          artist TEXT NOT NULL,
+          href TEXT NOT NULL,
+          play_url TEXT
+        )
+      ''');
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS playlist_songs (
+          playlist_id TEXT NOT NULL,
+          song_id TEXT NOT NULL,
+          PRIMARY KEY (playlist_id, song_id),
+          FOREIGN KEY (playlist_id) REFERENCES playlists (id) ON DELETE CASCADE,
+          FOREIGN KEY (song_id) REFERENCES songs (id) ON DELETE CASCADE
+        )
+      ''');
+    },
+
+    onUpgrade: (db, oldVersion, newVersion) async {
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS playlists (
+          id TEXT PRIMARY KEY,
+          name TEXT NOT NULL,
+          description TEXT,
+          coverUrl TEXT,
+          creator TEXT,
+          type TEXT NOT NULL
+        )
+      ''');
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS songs (
+          id TEXT PRIMARY KEY,
+          title TEXT NOT NULL,
+          artist TEXT NOT NULL,
+          href TEXT NOT NULL,
+          play_url TEXT
+        )
+      ''');
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS playlist_songs (
+          playlist_id TEXT NOT NULL,
+          song_id TEXT NOT NULL,
+          PRIMARY KEY (playlist_id, song_id),
+          FOREIGN KEY (playlist_id) REFERENCES playlists (id) ON DELETE CASCADE,
+          FOREIGN KEY (song_id) REFERENCES songs (id) ON DELETE CASCADE
+        )
+      ''');
     },
   );
   // --- END OF INITIALIZATION ---
