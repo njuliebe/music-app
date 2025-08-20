@@ -21,7 +21,7 @@ class PlaylistListItem extends StatelessWidget {
           MaterialPageRoute(
             builder:
                 (context) => PlaylistDetailPage(
-                  playlistId: playlist.id ?? '',
+                  playlistId: playlist.sourceId,
                   playlistName: playlist.name,
                 ),
           ),

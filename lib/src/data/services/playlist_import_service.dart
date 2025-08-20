@@ -11,7 +11,26 @@ class PlaylistImportService {
   String? _extractPlaylistId(String url) {
     final uri = Uri.tryParse(url);
     if (uri == null) return null;
-    return uri.queryParameters['id'];
+
+    // 1. Check the main query parameters
+    if (uri.queryParameters.containsKey('id')) {
+      return uri.queryParameters['id'];
+    }
+
+    // 2. Check the fragment
+    if (uri.hasFragment) {
+      String fragment = uri.fragment;
+      int queryStartIndex = fragment.indexOf('?');
+      if (queryStartIndex != -1) {
+        String queryString = fragment.substring(queryStartIndex + 1);
+        final queryParams = Uri.splitQueryString(queryString);
+        if (queryParams.containsKey('id')) {
+          return queryParams['id'];
+        }
+      }
+    }
+
+    return null;
   }
 
   // Imports a playlist from the given URL

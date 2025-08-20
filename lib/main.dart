@@ -23,13 +23,7 @@ final playlistRepositoryProvider = Provider<PlaylistRepository>((ref) {
   return PlaylistRepository(db: db);
 });
 
-// 3. The FutureProvider for playlists now has a much simpler, safer dependency chain.
-final playlistsFutureProvider = FutureProvider.autoDispose<List<Playlist>>((
-  ref,
-) {
-  final repository = ref.watch(playlistRepositoryProvider);
-  return repository.getAllPlaylists();
-});
+
 
 Future<void> main() async {
   // --- CENTRALIZED INITIALIZATION ---
@@ -44,67 +38,66 @@ Future<void> main() async {
   // Open the database and prepare the instance
   final db = await openDatabase(
     join(await getDatabasesPath(), 'music_app.db'),
-    version: 3,
+    version: 5, // Incremented version to trigger onUpgrade
     onCreate: (db, version) async {
       await db.execute('''
-        CREATE TABLE IF NOT EXISTS playlists (
-          id TEXT PRIMARY KEY,
+        CREATE TABLE playlists (
+          pk_id INTEGER PRIMARY KEY AUTOINCREMENT,
+          source_id TEXT UNIQUE,
           name TEXT NOT NULL,
           description TEXT,
           coverUrl TEXT,
           creator TEXT,
-          type TEXT NOT NULL
+          type TEXT NOT NULL,
+          import_time INTEGER NOT NULL
         )
       ''');
       await db.execute('''
-        CREATE TABLE IF NOT EXISTS songs (
-          id TEXT PRIMARY KEY,
-          title TEXT NOT NULL,
-          artist TEXT NOT NULL,
-          href TEXT NOT NULL,
-          play_url TEXT
-        )
-      ''');
-      await db.execute('''
-        CREATE TABLE IF NOT EXISTS playlist_songs (
+        CREATE TABLE playlist_songs (
+          pk_id INTEGER PRIMARY KEY AUTOINCREMENT,
           playlist_id TEXT NOT NULL,
-          song_id TEXT NOT NULL,
-          PRIMARY KEY (playlist_id, song_id),
-          FOREIGN KEY (playlist_id) REFERENCES playlists (id) ON DELETE CASCADE,
-          FOREIGN KEY (song_id) REFERENCES songs (id) ON DELETE CASCADE
+          song_title TEXT NOT NULL,
+          artist TEXT NOT NULL,
+          play_url TEXT,
+          FOREIGN KEY (playlist_id) REFERENCES playlists (source_id) ON DELETE CASCADE,
+          UNIQUE (playlist_id, song_title, artist)
         )
       ''');
     },
-
     onUpgrade: (db, oldVersion, newVersion) async {
-      await db.execute('''
-        CREATE TABLE IF NOT EXISTS playlists (
-          id TEXT PRIMARY KEY,
-          name TEXT NOT NULL,
-          description TEXT,
-          coverUrl TEXT,
-          creator TEXT,
-          type TEXT NOT NULL
-        )
-      ''');
-      await db.execute('''
-        CREATE TABLE IF NOT EXISTS songs (
-          id TEXT PRIMARY KEY,
-          title TEXT NOT NULL,
-          artist TEXT NOT NULL,
-          href TEXT NOT NULL,
-          play_url TEXT
-        )
-      ''');
-      await db.execute('''
-        CREATE TABLE IF NOT EXISTS playlist_songs (
-          playlist_id TEXT NOT NULL,
-          song_id TEXT NOT NULL,
-          PRIMARY KEY (playlist_id, song_id),
-          FOREIGN KEY (playlist_id) REFERENCES playlists (id) ON DELETE CASCADE,
-          FOREIGN KEY (song_id) REFERENCES songs (id) ON DELETE CASCADE
-        )
-      ''');
+      // This is a simple migration strategy that DROPS and RECREATES tables.
+      // All existing data will be lost. For a production app, a more
+      // sophisticated data migration strategy would be required.
+      if (oldVersion < 5) {
+        await db.execute('DROP TABLE IF EXISTS playlists');
+        await db.execute('DROP TABLE IF EXISTS playlist_songs');
+        await db.execute('DROP TABLE IF EXISTS songs'); // Also drop legacy songs table
+
+        // Re-create tables with the new schema
+        await db.execute('''
+          CREATE TABLE playlists (
+            pk_id INTEGER PRIMARY KEY AUTOINCREMENT,
+            source_id TEXT UNIQUE,
+            name TEXT NOT NULL,
+            description TEXT,
+            coverUrl TEXT,
+            creator TEXT,
+            type TEXT NOT NULL,
+            import_time INTEGER NOT NULL
+          )
+        ''');
+        await db.execute('''
+          CREATE TABLE playlist_songs (
+            pk_id INTEGER PRIMARY KEY AUTOINCREMENT,
+            playlist_id TEXT NOT NULL,
+            song_title TEXT NOT NULL,
+            artist TEXT NOT NULL,
+            play_url TEXT,
+            FOREIGN KEY (playlist_id) REFERENCES playlists (source_id) ON DELETE CASCADE,
+            UNIQUE (playlist_id, song_title, artist)
+          )
+        ''');
+      }
     },
   );
   // --- END OF INITIALIZATION ---

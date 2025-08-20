@@ -1,16 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:music_app/main.dart';
-import 'package:music_app/src/data/models/playlist_song.dart';
-import 'package:music_app/src/data/repositories/playlist_repository.dart';
+import 'package:music_app/src/features/library/presentation/providers/playlist_song_notifier.dart';
 
-final playlistSongsProvider = FutureProvider.autoDispose
-    .family<List<PlaylistSong>, String>((ref, playlistId) {
-      final playlistRepository = ref.watch(playlistRepositoryProvider);
-      return playlistRepository.getSongsForPlaylist(playlistId);
-    });
-
-class PlaylistDetailPage extends ConsumerWidget {
+class PlaylistDetailPage extends ConsumerStatefulWidget {
   const PlaylistDetailPage({
     super.key,
     required this.playlistId,
@@ -21,33 +13,73 @@ class PlaylistDetailPage extends ConsumerWidget {
   final String? playlistName;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final songsAsyncValue = ref.watch(playlistSongsProvider(playlistId));
+  ConsumerState<PlaylistDetailPage> createState() => _PlaylistDetailPageState();
+}
+
+class _PlaylistDetailPageState extends ConsumerState<PlaylistDetailPage> {
+  final ScrollController _scrollController = ScrollController();
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(_onScroll);
+  }
+
+  @override
+  void dispose() {
+    _scrollController.removeListener(_onScroll);
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    if (_scrollController.position.pixels >= _scrollController.position.maxScrollExtent - 200) {
+      ref.read(playlistSongsNotifierProvider(widget.playlistId).notifier).fetchNextPage();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final songsState = ref.watch(playlistSongsNotifierProvider(widget.playlistId));
 
     return Scaffold(
-      appBar: AppBar(title: Text(playlistName ?? '歌单')),
-      body: songsAsyncValue.when(
-        data: (songs) {
-          if (songs.isEmpty) {
+      appBar: AppBar(title: Text(widget.playlistName ?? '歌单')),
+      body: RefreshIndicator(
+        onRefresh: () => ref.read(playlistSongsNotifierProvider(widget.playlistId).notifier).refresh(),
+        child: Builder(builder: (context) {
+          if (songsState.items.isEmpty && songsState.isLoading) {
+            return const Center(child: CircularProgressIndicator());
+          } else if (songsState.items.isEmpty && !songsState.hasMore) {
             return const Center(child: Text('歌单里没有歌曲'));
+          } else {
+            return ListView.builder(
+              controller: _scrollController,
+              itemCount: songsState.items.length + (songsState.hasMore ? 1 : 0),
+              itemBuilder: (context, index) {
+                if (index == songsState.items.length) {
+                  if (songsState.isLoading) {
+                    return const Center(child: CircularProgressIndicator());
+                  } else {
+                    return const Center(
+                        child: Padding(
+                      padding: EdgeInsets.all(16.0),
+                      child: Text('没有更多歌曲了'),
+                    ));
+                  }
+                }
+
+                final playlistSong = songsState.items[index];
+                return ListTile(
+                  title: Text(playlistSong.songTitle),
+                  subtitle: Text(playlistSong.artist),
+                  onTap: () {
+                    // TODO: implement play song
+                  },
+                );
+              },
+            );
           }
-          return ListView.builder(
-            itemCount: songs.length,
-            itemBuilder: (context, index) {
-              final song = songs[index].song;
-              return ListTile(
-                // leading: Image.network(song.album?.cover ?? '', width: 50, height: 50, fit: BoxFit.cover,),
-                title: Text(song.title ?? '未知歌曲'),
-                subtitle: Text(song.artist ?? '未知艺术家'),
-                onTap: () {
-                  // TODO: implement play song
-                },
-              );
-            },
-          );
-        },
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, stack) => Center(child: Text('加载失败: $error')),
+        }),
       ),
     );
   }
