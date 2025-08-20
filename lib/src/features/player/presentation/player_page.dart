@@ -6,6 +6,7 @@ import 'package:just_audio/just_audio.dart';
 import 'package:music_app/src/data/models/song.dart';
 import 'package:music_app/src/features/lyrics/data/lyric_repository.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
+import 'package:music_app/src/features/player/presentation/providers/playback_provider.dart';
 
 // A data model for a single line of LRC lyrics.
 class LyricLine {
@@ -48,8 +49,18 @@ class _PlayerPageState extends ConsumerState<PlayerPage> {
       await _audioPlayer.setUrl(widget.song.playUrl!);
       _setupPositionListener();
       _audioPlayer.play();
+
+      _audioPlayer.playerStateStream.listen((state) {
+        if (state.processingState == ProcessingState.completed) {
+          _playNextSong();
+        }
+      });
     } catch (e) {
       print("Error loading audio source: $e");
+      // Show a snackbar or some other user feedback
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error loading audio: $e')),
+      );
     }
   }
 
@@ -120,6 +131,50 @@ class _PlayerPageState extends ConsumerState<PlayerPage> {
         }
       }
     });
+  }
+
+  Future<void> _playNextSong() async {
+    final playbackService = ref.read(playbackServiceProvider);
+    playbackService.playNext();
+
+    final nextSong = playbackService.currentSong;
+    if (nextSong == null) {
+      // No more songs or playlist ended
+      if(mounted) Navigator.of(context).pop(); // Go back to the playlist
+      return;
+    }
+
+    // Show loading indicator while fetching next song
+    if(mounted) {
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => const Center(child: CircularProgressIndicator()),
+      );
+    }
+
+
+    try {
+      final detailedSong = await playbackService.getDetailedSong(nextSong);
+      if(mounted) Navigator.of(context).pop(); // Dismiss loading indicator
+
+      if(mounted) {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(
+            builder: (context) => PlayerPage(song: detailedSong),
+          ),
+        );
+      }
+    } catch (e) {
+      if(mounted) Navigator.of(context).pop(); // Dismiss loading indicator
+      if(mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to play next song: $e')),
+        );
+        // Optionally, pop the player page if the next song fails
+        Navigator.of(context).pop();
+      }
+    }
   }
 
   @override
@@ -281,9 +336,7 @@ class _PlayerPageState extends ConsumerState<PlayerPage> {
             IconButton(
               icon: const Icon(Icons.skip_next),
               iconSize: 48.0,
-              onPressed: () {
-                // TODO: Implement next song logic
-              },
+              onPressed: _playNextSong,
             ),
           ],
         );

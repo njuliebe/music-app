@@ -5,7 +5,7 @@ import 'package:music_app/src/data/services/playlist_import_service.dart';
 
 class PlaylistRepository {
   final Database _db;
-  static const int pageSize = 20; // Common page size
+  static const int pageSize = 500; // Common page size
 
   PlaylistRepository({required Database db}) : _db = db;
 
@@ -21,7 +21,10 @@ class PlaylistRepository {
     });
   }
 
-  Future<List<PlaylistSong>> getSongsForPlaylist(String playlistId, {int page = 1}) async {
+  Future<List<PlaylistSong>> getSongsForPlaylist(
+    String playlistId, {
+    int page = 1,
+  }) async {
     final List<Map<String, dynamic>> maps = await _db.query(
       'playlist_songs',
       where: 'playlist_id = ?',
@@ -46,7 +49,10 @@ class PlaylistRepository {
   }
 
   Future<void> removeSongFromPlaylist(
-      String playlistId, String songTitle, String artist) async {
+    String playlistId,
+    String songTitle,
+    String artist,
+  ) async {
     await _db.delete(
       'playlist_songs',
       where: 'playlist_id = ? AND song_title = ? AND artist = ?',
@@ -66,7 +72,7 @@ class PlaylistRepository {
         creator: 'Imported',
         importTime: DateTime.now(), // Set the import time
       );
-      
+
       // Since source_id is UNIQUE, `insert` with `replace` will work as an upsert.
       await txn.insert(
         'playlists',
