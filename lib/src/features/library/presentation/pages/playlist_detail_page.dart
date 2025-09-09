@@ -36,19 +36,30 @@ class _PlaylistDetailPageState extends ConsumerState<PlaylistDetailPage> {
   }
 
   void _onScroll() {
-    if (_scrollController.position.pixels >= _scrollController.position.maxScrollExtent - 200) {
-      ref.read(playlistSongsNotifierProvider(widget.playlistId).notifier).fetchNextPage();
+    if (_scrollController.position.pixels >=
+        _scrollController.position.maxScrollExtent - 200) {
+      ref
+          .read(playlistSongsNotifierProvider(widget.playlistId).notifier)
+          .fetchNextPage();
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final songsState = ref.watch(playlistSongsNotifierProvider(widget.playlistId));
+    final songsState = ref.watch(
+      playlistSongsNotifierProvider(widget.playlistId),
+    );
 
     return Scaffold(
       appBar: AppBar(title: Text(widget.playlistName ?? '歌单')),
       body: RefreshIndicator(
-        onRefresh: () => ref.read(playlistSongsNotifierProvider(widget.playlistId).notifier).refresh(),
+        onRefresh:
+            () =>
+                ref
+                    .read(
+                      playlistSongsNotifierProvider(widget.playlistId).notifier,
+                    )
+                    .refresh(),
         child: CustomScrollView(
           controller: _scrollController,
           slivers: [
@@ -57,11 +68,16 @@ class _PlaylistDetailPageState extends ConsumerState<PlaylistDetailPage> {
                 padding: const EdgeInsets.all(16.0),
                 child: FilledButton.icon(
                   onPressed: () async {
-                    final songs = ref.read(playlistSongsNotifierProvider(widget.playlistId)).items;
+                    final songs =
+                        ref
+                            .read(
+                              playlistSongsNotifierProvider(widget.playlistId),
+                            )
+                            .items;
                     if (songs.isEmpty) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('歌单里没有歌曲')),
-                      );
+                      ScaffoldMessenger.of(
+                        context,
+                      ).showSnackBar(const SnackBar(content: Text('歌单里没有歌曲')));
                       return;
                     }
 
@@ -74,25 +90,28 @@ class _PlaylistDetailPageState extends ConsumerState<PlaylistDetailPage> {
                     showDialog(
                       context: context,
                       barrierDismissible: false,
-                      builder: (context) =>
-                          const Center(child: CircularProgressIndicator()),
+                      builder:
+                          (context) =>
+                              const Center(child: CircularProgressIndicator()),
                     );
 
                     try {
-                      final detailedSong =
-                          await playbackService.getDetailedSong(currentSong);
-                      Navigator.of(context).pop(); // Close the loading indicator
+                      final detailedSong = await playbackService
+                          .getDetailedSong(currentSong);
+                      Navigator.of(
+                        context,
+                      ).pop(); // Close the loading indicator
 
                       Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (context) => PlayerPage(song: detailedSong),
-                        ),
+                        MaterialPageRoute(builder: (context) => PlayerPage()),
                       );
                     } catch (e) {
-                      Navigator.of(context).pop(); // Close the loading indicator
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('播放失败: $e')),
-                      );
+                      Navigator.of(
+                        context,
+                      ).pop(); // Close the loading indicator
+                      ScaffoldMessenger.of(
+                        context,
+                      ).showSnackBar(SnackBar(content: Text('播放失败: $e')));
                     }
                   },
                   icon: const Icon(Icons.play_arrow),
@@ -104,22 +123,26 @@ class _PlaylistDetailPageState extends ConsumerState<PlaylistDetailPage> {
               ),
             ),
             if (songsState.items.isEmpty && songsState.isLoading)
-              const SliverFillRemaining(child: Center(child: CircularProgressIndicator()))
+              const SliverFillRemaining(
+                child: Center(child: CircularProgressIndicator()),
+              )
             else if (songsState.items.isEmpty && !songsState.hasMore)
               const SliverFillRemaining(child: Center(child: Text('歌单里没有歌曲')))
             else
               SliverList.builder(
-                itemCount: songsState.items.length + (songsState.hasMore ? 1 : 0),
+                itemCount:
+                    songsState.items.length + (songsState.hasMore ? 1 : 0),
                 itemBuilder: (context, index) {
                   if (index == songsState.items.length) {
                     if (songsState.isLoading) {
                       return const Center(child: CircularProgressIndicator());
                     } else {
                       return const Center(
-                          child: Padding(
-                        padding: EdgeInsets.all(16.0),
-                        child: Text('没有更多歌曲了'),
-                      ));
+                        child: Padding(
+                          padding: EdgeInsets.all(16.0),
+                          child: Text('没有更多歌曲了'),
+                        ),
+                      );
                     }
                   }
 
@@ -130,39 +153,48 @@ class _PlaylistDetailPageState extends ConsumerState<PlaylistDetailPage> {
                     onTap: () async {
                       final playbackService = ref.read(playbackServiceProvider);
                       final allSongsInPlaylist = songsState.items;
-                      final tappedSongIndex = allSongsInPlaylist.indexOf(playlistSong);
+                      final tappedSongIndex = allSongsInPlaylist.indexOf(
+                        playlistSong,
+                      );
 
                       if (tappedSongIndex == -1) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('歌曲未找到')),
-                        );
+                        ScaffoldMessenger.of(
+                          context,
+                        ).showSnackBar(const SnackBar(content: Text('歌曲未找到')));
                         return;
                       }
 
-                      playbackService.start(allSongsInPlaylist, startIndex: tappedSongIndex);
+                      playbackService.start(
+                        allSongsInPlaylist,
+                        startIndex: tappedSongIndex,
+                      );
 
                       showDialog(
                         context: context,
                         barrierDismissible: false,
-                        builder: (context) =>
-                            const Center(child: CircularProgressIndicator()),
+                        builder:
+                            (context) => const Center(
+                              child: CircularProgressIndicator(),
+                            ),
                       );
 
                       try {
-                        final detailedSong =
-                            await playbackService.getDetailedSong(playlistSong);
-                        Navigator.of(context).pop(); // Close the loading indicator
+                        final detailedSong = await playbackService
+                            .getDetailedSong(playlistSong);
+                        Navigator.of(
+                          context,
+                        ).pop(); // Close the loading indicator
 
                         Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (context) => PlayerPage(song: detailedSong),
-                          ),
+                          MaterialPageRoute(builder: (context) => PlayerPage()),
                         );
                       } catch (e) {
-                        Navigator.of(context).pop(); // Close the loading indicator
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text('播放失败: $e')),
-                        );
+                        Navigator.of(
+                          context,
+                        ).pop(); // Close the loading indicator
+                        ScaffoldMessenger.of(
+                          context,
+                        ).showSnackBar(SnackBar(content: Text('播放失败: $e')));
                       }
                     },
                   );

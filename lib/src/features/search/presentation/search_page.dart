@@ -107,11 +107,9 @@ class _SearchPageState extends ConsumerState<SearchPage> {
               subtitle: Text(song.artist),
               onTap: () async {
                 if (song.playUrl != null && song.playUrl!.isNotEmpty) {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (context) => PlayerPage(song: song),
-                    ),
-                  );
+                  Navigator.of(
+                    context,
+                  ).push(MaterialPageRoute(builder: (context) => PlayerPage()));
                 } else {
                   showDialog(
                     context: context,
@@ -127,9 +125,7 @@ class _SearchPageState extends ConsumerState<SearchPage> {
                     );
                     Navigator.of(context).pop(); // Close the loading indicator
                     Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (context) => PlayerPage(song: detailedSong),
-                      ),
+                      MaterialPageRoute(builder: (context) => PlayerPage()),
                     );
                   } catch (e) {
                     Navigator.of(context).pop(); // Close the loading indicator

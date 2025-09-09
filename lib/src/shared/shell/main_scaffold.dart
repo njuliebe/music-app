@@ -4,6 +4,7 @@ import 'package:music_app/src/features/home/presentation/home_page.dart';
 import 'package:music_app/src/features/library/presentation/pages/library_page.dart';
 import 'package:music_app/src/features/lyrics/presentation/lyric_search_screen.dart';
 import 'package:music_app/src/features/search/presentation/search_page.dart';
+import 'package:music_app/src/features/player/presentation/mini_player_widget.dart';
 
 final pageIndexProvider = StateProvider<int>((ref) => 0);
 
@@ -17,7 +18,12 @@ class MainScaffold extends ConsumerWidget {
     final pageIndex = ref.watch(pageIndexProvider);
 
     return Scaffold(
-      body: _pages[pageIndex],
+      body: Column(
+        children: [
+          Expanded(child: _pages[pageIndex]),
+          const MiniPlayerWidget(),
+        ],
+      ),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: pageIndex,
         onTap: (index) => ref.read(pageIndexProvider.notifier).state = index,
