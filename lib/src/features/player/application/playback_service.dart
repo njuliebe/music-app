@@ -29,6 +29,7 @@ class PlayerState with _$PlayerState {
     @Default(false) bool isLoadingLyrics,
     @Default([]) List<LyricLine> lyrics,
     @Default(-1) int currentLyricIndex,
+    @Default(0) int playlistSize,
   }) = _PlayerState;
 }
 
@@ -63,8 +64,10 @@ class PlaybackService {
     -1,
   );
 
+  final BehaviorSubject<int> _playlistSizeStream = BehaviorSubject.seeded(0);
+
   Stream<PlayerState> get playerStateStream {
-    return Rx.combineLatest7(
+    return Rx.combineLatest8(
       _audioPlayer.playerStateStream,
       _audioPlayer.positionStream,
       _audioPlayer.durationStream,
@@ -72,6 +75,7 @@ class PlaybackService {
       _isLoadingLyricsStream,
       _lyricsStream,
       _currentLyricIndexStream,
+      _playlistSizeStream,
       (
         playerState,
         position,
@@ -80,6 +84,7 @@ class PlaybackService {
         isLoading,
         lyrics,
         lyricIndex,
+        playlistSize,
       ) => PlayerState(
         isPlaying: playerState.playing,
         currentSong: currentSong,
@@ -88,6 +93,7 @@ class PlaybackService {
         isLoadingLyrics: isLoading,
         lyrics: lyrics,
         currentLyricIndex: lyricIndex,
+        playlistSize: playlistSize,
       ),
     );
   }
@@ -96,6 +102,7 @@ class PlaybackService {
 
   Future<void> start(List<PlaylistSong> playlist, {int? startIndex}) async {
     _playlist = List.from(playlist);
+    _playlistSizeStream.add(_playlist.length);
     if (_playlist.isEmpty) {
       _currentIndex = null;
       _currentSongStream.add(null);
@@ -242,5 +249,6 @@ class PlaybackService {
     _isLoadingLyricsStream.close();
     _lyricsStream.close();
     _currentLyricIndexStream.close();
+    _playlistSizeStream.close();
   }
 }

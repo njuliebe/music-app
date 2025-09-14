@@ -134,7 +134,7 @@ class _PlayerPageState extends ConsumerState<PlayerPage> {
                   height: 1.6,
                 )
             : Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
                   height: 1.5,
                 );
 
@@ -152,13 +152,20 @@ class _PlayerPageState extends ConsumerState<PlayerPage> {
 
   Widget _buildPlaybackControls(
       BuildContext context, PlayerState state, PlaybackService service) {
+    final isSingleSong = state.playlistSize <= 1;
+
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         IconButton(
-          icon: const Icon(Icons.skip_previous),
+          icon: Icon(
+            Icons.skip_previous,
+            color: isSingleSong
+                ? Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.3)
+                : null,
+          ),
           iconSize: 48.0,
-          onPressed: service.playPrevious,
+          onPressed: isSingleSong ? null : service.playPrevious,
         ),
         const SizedBox(width: 24),
         IconButton(
@@ -176,9 +183,14 @@ class _PlayerPageState extends ConsumerState<PlayerPage> {
         ),
         const SizedBox(width: 24),
         IconButton(
-          icon: const Icon(Icons.skip_next),
+          icon: Icon(
+            Icons.skip_next,
+            color: isSingleSong
+                ? Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.3)
+                : null,
+          ),
           iconSize: 48.0,
-          onPressed: service.playNext,
+          onPressed: isSingleSong ? null : service.playNext,
         ),
       ],
     );

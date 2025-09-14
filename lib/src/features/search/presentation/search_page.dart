@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:music_app/src/data/models/playlist_song.dart';
 import 'package:music_app/src/data/models/song.dart';
 import 'package:music_app/src/data/providers.dart';
-import 'package:music_app/src/features/lyrics/data/lyric_repository.dart';
-import 'package:music_app/src/features/lyrics/domain/lyric.dart';
-
 import 'package:music_app/src/features/player/presentation/player_page.dart';
+import 'package:music_app/src/features/player/presentation/providers/playback_provider.dart';
 
 // 1. 创建一个 FutureProvider，用于搜索歌曲
 final searchResultsProvider = FutureProvider.autoDispose
@@ -123,11 +122,26 @@ class _SearchPageState extends ConsumerState<SearchPage> {
                     final detailedSong = await musicRepository.getSongDetail(
                       song,
                     );
+
+                    // Create a PlaylistSong from the detailed song
+                    final playlistSong = PlaylistSong(
+                      playlistId: 'search', // Temporary playlist ID for search results
+                      songTitle: detailedSong.title,
+                      artist: detailedSong.artist,
+                      playUrl: detailedSong.playUrl,
+                    );
+
+                    // Start playback with the song
+                    final playbackService = ref.read(playbackServiceProvider);
+                    await playbackService.start([playlistSong], startIndex: 0);
+
+                    if (!mounted) return;
                     Navigator.of(context).pop(); // Close the loading indicator
                     Navigator.of(context).push(
                       MaterialPageRoute(builder: (context) => PlayerPage()),
                     );
                   } catch (e) {
+                    if (!mounted) return;
                     Navigator.of(context).pop(); // Close the loading indicator
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(content: Text('Failed to load song: $e')),
