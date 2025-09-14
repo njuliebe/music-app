@@ -21,8 +21,11 @@ Song _$SongFromJson(Map<String, dynamic> json) {
 /// @nodoc
 mixin _$Song {
   String get id => throw _privateConstructorUsedError;
+  @JsonKey(name: 'name')
   String get title => throw _privateConstructorUsedError;
+  @JsonKey(fromJson: _artistFromJson)
   String get artist => throw _privateConstructorUsedError;
+  @JsonKey(name: 'url_id')
   String get href => throw _privateConstructorUsedError;
   @JsonKey(name: 'play_url')
   String? get playUrl => throw _privateConstructorUsedError;
@@ -39,9 +42,9 @@ abstract class $SongCopyWith<$Res> {
   @useResult
   $Res call(
       {String id,
-      String title,
-      String artist,
-      String href,
+      @JsonKey(name: 'name') String title,
+      @JsonKey(fromJson: _artistFromJson) String artist,
+      @JsonKey(name: 'url_id') String href,
       @JsonKey(name: 'play_url') String? playUrl});
 }
 
@@ -98,9 +101,9 @@ abstract class _$$SongImplCopyWith<$Res> implements $SongCopyWith<$Res> {
   @useResult
   $Res call(
       {String id,
-      String title,
-      String artist,
-      String href,
+      @JsonKey(name: 'name') String title,
+      @JsonKey(fromJson: _artistFromJson) String artist,
+      @JsonKey(name: 'url_id') String href,
       @JsonKey(name: 'play_url') String? playUrl});
 }
 
@@ -150,9 +153,9 @@ class __$$SongImplCopyWithImpl<$Res>
 class _$SongImpl implements _Song {
   const _$SongImpl(
       {required this.id,
-      required this.title,
-      required this.artist,
-      required this.href,
+      @JsonKey(name: 'name') required this.title,
+      @JsonKey(fromJson: _artistFromJson) required this.artist,
+      @JsonKey(name: 'url_id') required this.href,
       @JsonKey(name: 'play_url') this.playUrl});
 
   factory _$SongImpl.fromJson(Map<String, dynamic> json) =>
@@ -161,10 +164,13 @@ class _$SongImpl implements _Song {
   @override
   final String id;
   @override
+  @JsonKey(name: 'name')
   final String title;
   @override
+  @JsonKey(fromJson: _artistFromJson)
   final String artist;
   @override
+  @JsonKey(name: 'url_id')
   final String href;
   @override
   @JsonKey(name: 'play_url')
@@ -209,9 +215,9 @@ class _$SongImpl implements _Song {
 abstract class _Song implements Song {
   const factory _Song(
       {required final String id,
-      required final String title,
-      required final String artist,
-      required final String href,
+      @JsonKey(name: 'name') required final String title,
+      @JsonKey(fromJson: _artistFromJson) required final String artist,
+      @JsonKey(name: 'url_id') required final String href,
       @JsonKey(name: 'play_url') final String? playUrl}) = _$SongImpl;
 
   factory _Song.fromJson(Map<String, dynamic> json) = _$SongImpl.fromJson;
@@ -219,10 +225,13 @@ abstract class _Song implements Song {
   @override
   String get id;
   @override
+  @JsonKey(name: 'name')
   String get title;
   @override
+  @JsonKey(fromJson: _artistFromJson)
   String get artist;
   @override
+  @JsonKey(name: 'url_id')
   String get href;
   @override
   @JsonKey(name: 'play_url')

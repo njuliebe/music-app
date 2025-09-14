@@ -8,17 +8,17 @@ part of 'song.dart';
 
 _$SongImpl _$$SongImplFromJson(Map<String, dynamic> json) => _$SongImpl(
       id: json['id'] as String,
-      title: json['title'] as String,
-      artist: json['artist'] as String,
-      href: json['href'] as String,
+      title: json['name'] as String,
+      artist: _artistFromJson(json['artist']),
+      href: json['url_id'] as String,
       playUrl: json['play_url'] as String?,
     );
 
 Map<String, dynamic> _$$SongImplToJson(_$SongImpl instance) =>
     <String, dynamic>{
       'id': instance.id,
-      'title': instance.title,
+      'name': instance.title,
       'artist': instance.artist,
-      'href': instance.href,
+      'url_id': instance.href,
       'play_url': instance.playUrl,
     };

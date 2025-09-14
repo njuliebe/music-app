@@ -38,7 +38,7 @@ class PlaybackService {
   final AudioPlayer _audioPlayer;
 
   PlaybackService(this._musicRepository, this._lyricRepository)
-      : _audioPlayer = AudioPlayer() {
+    : _audioPlayer = AudioPlayer() {
     _audioPlayer.playerStateStream.listen((state) {
       if (state.processingState == ProcessingState.completed) {
         playNext();
@@ -53,10 +53,15 @@ class PlaybackService {
 
   final BehaviorSubject<PlaylistSong?> _currentSongStream =
       BehaviorSubject.seeded(null);
-  final BehaviorSubject<bool> _isLoadingLyricsStream =
-      BehaviorSubject.seeded(false);
-  final BehaviorSubject<List<LyricLine>> _lyricsStream = BehaviorSubject.seeded([]);
-  final BehaviorSubject<int> _currentLyricIndexStream = BehaviorSubject.seeded(-1);
+  final BehaviorSubject<bool> _isLoadingLyricsStream = BehaviorSubject.seeded(
+    false,
+  );
+  final BehaviorSubject<List<LyricLine>> _lyricsStream = BehaviorSubject.seeded(
+    [],
+  );
+  final BehaviorSubject<int> _currentLyricIndexStream = BehaviorSubject.seeded(
+    -1,
+  );
 
   Stream<PlayerState> get playerStateStream {
     return Rx.combineLatest7(
@@ -67,9 +72,15 @@ class PlaybackService {
       _isLoadingLyricsStream,
       _lyricsStream,
       _currentLyricIndexStream,
-      (playerState, position, duration, currentSong, isLoading, lyrics,
-              lyricIndex) =>
-          PlayerState(
+      (
+        playerState,
+        position,
+        duration,
+        currentSong,
+        isLoading,
+        lyrics,
+        lyricIndex,
+      ) => PlayerState(
         isPlaying: playerState.playing,
         currentSong: currentSong,
         position: position,
@@ -118,7 +129,8 @@ class PlaybackService {
       return;
     }
     if (_currentIndex != null) {
-      _currentIndex = (_currentIndex! - 1 + _playlist.length) % _playlist.length;
+      _currentIndex =
+          (_currentIndex! - 1 + _playlist.length) % _playlist.length;
       await _playCurrent();
     }
   }
@@ -155,12 +167,19 @@ class PlaybackService {
   Future<void> _searchLyrics(String title) async {
     try {
       final lyrics = await _lyricRepository.searchLyrics(title);
-      if (lyrics.isNotEmpty && lyrics.first.syncedLyrics != null) {
+      if (lyrics.isEmpty) {
+        _lyricsStream.add([]);
+      } else if (lyrics.first.syncedLyrics != null) {
         final parsed = _parseLyrics(lyrics.first.syncedLyrics!);
         _lyricsStream.add(parsed);
+      } else if (lyrics.first.plainLyrics != null) {
+        // Could parse plain lyrics if needed
+        _lyricsStream.add([]);
+      } else {
+        _lyricsStream.add([]);
       }
     } catch (e) {
-      // Fail silently
+      _lyricsStream.add([]);
     } finally {
       _isLoadingLyricsStream.add(false);
     }
@@ -168,7 +187,7 @@ class PlaybackService {
 
   List<LyricLine> _parseLyrics(String lrcContent) {
     final lines = <LyricLine>[];
-    final regex = RegExp(r'\\[(\\d{2}):(\\d{2})\\.(\\d{2,3})\\](.*)');
+    final regex = RegExp(r'\[(\d{2}):(\d{2})\.(\d{2,3})\](.*)');
     for (final line in lrcContent.split('\n')) {
       final match = regex.firstMatch(line);
       if (match != null) {
@@ -176,8 +195,12 @@ class PlaybackService {
         final sec = int.parse(match.group(2)!);
         final ms = int.parse(match.group(3)!);
         final text = match.group(4) ?? '';
-        lines.add(LyricLine(
-            Duration(minutes: min, seconds: sec, milliseconds: ms), text));
+        lines.add(
+          LyricLine(
+            Duration(minutes: min, seconds: sec, milliseconds: ms * 10),
+            text,
+          ),
+        );
       }
     }
     return lines;

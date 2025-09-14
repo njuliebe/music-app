@@ -6,6 +6,7 @@ import 'package:music_app/src/data/repositories/music_repository.dart';
 import 'package:music_app/src/data/repositories/playlist_repository.dart';
 import 'package:music_app/src/data/sources/api_service.dart';
 import 'package:music_app/src/data/services/playlist_import_service.dart'; // Import the new service
+import 'package:music_app/src/data/sources/gd_api_service.dart';
 import 'package:sqflite/sqflite.dart';
 
 /// A provider that creates an instance of [Dio].
@@ -17,12 +18,17 @@ final apiServiceProvider = Provider<ApiService>((ref) {
   return ApiService(dio);
 });
 
+final gdApiServiceProvider = Provider<GdApiService>((ref) {
+  final dio = ref.watch(dioProvider);
+  return GdApiService(dio);
+});
+
 /// A provider that creates and exposes an instance of [MusicRepository].
 ///
 /// By default, it provides the [ApiMusicRepository] for real network calls.
 final musicRepositoryProvider = Provider<MusicRepository>((ref) {
-  final apiService = ref.watch(apiServiceProvider);
-  return ApiMusicRepository(apiService);
+  final gdApiService = ref.watch(gdApiServiceProvider);
+  return ApiMusicRepository(gdApiService);
 });
 
 /// A provider that creates an instance of [PlaylistImportService].

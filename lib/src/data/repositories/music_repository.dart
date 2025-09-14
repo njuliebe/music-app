@@ -1,5 +1,6 @@
 import 'package:music_app/src/data/models/song.dart';
 import 'package:music_app/src/data/sources/api_service.dart';
+import 'package:music_app/src/data/sources/gd_api_service.dart';
 
 /// A repository that handles all music-related data operations.
 abstract class MusicRepository {
@@ -60,7 +61,7 @@ class MockMusicRepository implements MusicRepository {
 
 /// An implementation of [MusicRepository] that communicates with a real API.
 class ApiMusicRepository implements MusicRepository {
-  final ApiService _apiService;
+  final GdApiService _apiService;
 
   ApiMusicRepository(this._apiService);
 
@@ -74,8 +75,9 @@ class ApiMusicRepository implements MusicRepository {
 
   @override
   Future<Song> getSongDetail(Song song) async {
-    final result = await _apiService.getSongDetail(song.href);
-    song = song.copyWith(playUrl: result['play_url'] as String?);
+    final result = await _apiService.getSongDetail(song.id);
+    final url = result['url'] as String?;
+    song = song.copyWith(playUrl: url);
     return song;
   }
 }
