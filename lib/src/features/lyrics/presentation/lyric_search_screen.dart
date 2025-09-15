@@ -27,7 +27,7 @@ class _LyricSearchScreenState extends ConsumerState<LyricSearchScreen> {
     final lyrics = ref.watch(lyricSearchProvider(searchQuery));
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Search Lyrics')),
+      appBar: AppBar(title: const Text('搜索歌词')),
       body: Column(
         children: [
           Padding(
@@ -35,7 +35,7 @@ class _LyricSearchScreenState extends ConsumerState<LyricSearchScreen> {
             child: TextField(
               controller: _textController,
               decoration: InputDecoration(
-                hintText: 'Enter song title or artist',
+                hintText: '输入歌曲名或歌手',
                 suffixIcon: IconButton(
                   icon: const Icon(Icons.search),
                   onPressed: () {

@@ -31,17 +31,17 @@ class MainScaffold extends ConsumerWidget {
           BottomNavigationBarItem(
             icon: Icon(Icons.home_outlined),
             activeIcon: Icon(Icons.home),
-            label: 'Home',
+            label: '首页',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.search_outlined),
             activeIcon: Icon(Icons.search),
-            label: 'Search',
+            label: '搜索',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.my_library_music_outlined),
             activeIcon: Icon(Icons.my_library_music),
-            label: 'My Library',
+            label: '我的音乐',
           ),
         ],
       ),

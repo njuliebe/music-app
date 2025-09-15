@@ -31,7 +31,7 @@ class _PlayerPageState extends ConsumerState<PlayerPage> {
               ),
               backgroundColor: Colors.transparent,
             ),
-            body: const Center(child: Text("No song is currently playing.")),
+            body: const Center(child: Text("当前没有播放的歌曲")),
           );
         }
 
@@ -54,46 +54,52 @@ class _PlayerPageState extends ConsumerState<PlayerPage> {
               icon: const Icon(Icons.expand_more),
               onPressed: () => Navigator.of(context).pop(),
             ),
-            title: const Text("Now Playing"),
+            title: const Text("正在播放"),
             centerTitle: true,
             backgroundColor: Colors.transparent,
           ),
-          body: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24.0),
-            child: Column(
-              children: [
-                // Top section: Title and Artist
-                SizedBox(height: MediaQuery.of(context).size.height * 0.05),
-                Text(
-                  song.songTitle,
-                  style: Theme.of(context).textTheme.headlineSmall,
-                  textAlign: TextAlign.center,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  song.artist,
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        color: Theme.of(context).textTheme.bodySmall?.color,
-                      ),
-                  textAlign: TextAlign.center,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 24),
+          body: SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20.0),
+              child: Column(
+                children: [
+                  // Top section: Title and Artist
+                  const SizedBox(height: 20),
+                  Text(
+                    song.songTitle,
+                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                      fontSize: 24,
+                    ),
+                    textAlign: TextAlign.center,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    song.artist,
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          color: Theme.of(context).textTheme.bodySmall?.color,
+                          fontSize: 16,
+                        ),
+                    textAlign: TextAlign.center,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 20),
 
-                // Middle: Lyrics View
-                Expanded(
-                  child: _buildLyricsView(state),
-                ),
-                const SizedBox(height: 24),
+                  // Middle: Lyrics View
+                  Expanded(
+                    child: _buildLyricsView(state),
+                  ),
+                  const SizedBox(height: 20),
 
-                // Bottom: Player Controls
-                _buildProgressBar(context, state, playbackService),
-                _buildPlaybackControls(context, state, playbackService),
-                const SizedBox(height: 32),
-              ],
+                  // Bottom: Player Controls
+                  _buildProgressBar(context, state, playbackService),
+                  const SizedBox(height: 20),
+                  _buildPlaybackControls(context, state, playbackService),
+                  const SizedBox(height: 20),
+                ],
+              ),
             ),
           ),
         );
@@ -117,7 +123,7 @@ class _PlayerPageState extends ConsumerState<PlayerPage> {
 
     if (state.lyrics.isEmpty) {
       return const Center(
-        child: Text('No synced lyrics available.'),
+        child: Text('暂无歌词'),
       );
     }
 
@@ -154,59 +160,69 @@ class _PlayerPageState extends ConsumerState<PlayerPage> {
   Widget _buildPlaybackControls(
       BuildContext context, PlayerState state, PlaybackService service) {
     final isSingleSong = state.playlistSize <= 1;
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isSmallScreen = screenWidth < 360;
 
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        // 播放模式按钮
-        IconButton(
-          icon: Icon(
-            _getPlayModeIcon(state.playMode),
-            color: Theme.of(context).colorScheme.primary,
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: [
+          // 播放模式按钮
+          Flexible(
+            child: IconButton(
+              icon: Icon(
+                _getPlayModeIcon(state.playMode),
+                color: Theme.of(context).colorScheme.primary,
+              ),
+              iconSize: isSmallScreen ? 28.0 : 32.0,
+              onPressed: () {
+                service.togglePlayMode();
+                _showPlayModeToast(context, service.playMode);
+              },
+            ),
           ),
-          iconSize: 32.0,
-          onPressed: () {
-            service.togglePlayMode();
-            _showPlayModeToast(context, service.playMode);
-          },
-        ),
-        const SizedBox(width: 16),
-        IconButton(
-          icon: Icon(
-            Icons.skip_previous,
-            color: isSingleSong
-                ? Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.3)
-                : null,
+          Flexible(
+            child: IconButton(
+              icon: Icon(
+                Icons.skip_previous,
+                color: isSingleSong
+                    ? Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.3)
+                    : null,
+              ),
+              iconSize: isSmallScreen ? 40.0 : 48.0,
+              onPressed: isSingleSong ? null : service.playPrevious,
+            ),
           ),
-          iconSize: 48.0,
-          onPressed: isSingleSong ? null : service.playPrevious,
-        ),
-        const SizedBox(width: 24),
-        IconButton(
-          icon: Icon(state.isPlaying
-              ? Icons.pause_circle_filled
-              : Icons.play_circle_filled),
-          iconSize: 72.0,
-          onPressed: () {
-            if (state.isPlaying) {
-              service.pause();
-            } else {
-              service.play();
-            }
-          },
-        ),
-        const SizedBox(width: 24),
-        IconButton(
-          icon: Icon(
-            Icons.skip_next,
-            color: isSingleSong
-                ? Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.3)
-                : null,
+          Flexible(
+            child: IconButton(
+              icon: Icon(state.isPlaying
+                  ? Icons.pause_circle_filled
+                  : Icons.play_circle_filled),
+              iconSize: isSmallScreen ? 60.0 : 72.0,
+              onPressed: () {
+                if (state.isPlaying) {
+                  service.pause();
+                } else {
+                  service.play();
+                }
+              },
+            ),
           ),
-          iconSize: 48.0,
-          onPressed: isSingleSong ? null : service.playNext,
-        ),
-      ],
+          Flexible(
+            child: IconButton(
+              icon: Icon(
+                Icons.skip_next,
+                color: isSingleSong
+                    ? Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.3)
+                    : null,
+              ),
+              iconSize: isSmallScreen ? 40.0 : 48.0,
+              onPressed: isSingleSong ? null : service.playNext,
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -214,23 +230,39 @@ class _PlayerPageState extends ConsumerState<PlayerPage> {
       BuildContext context, PlayerState state, PlaybackService service) {
     return Column(
       children: [
-        Slider(
-          min: 0.0,
-          max: state.duration.inMilliseconds.toDouble(),
-          value: state.position.inMilliseconds
-              .toDouble()
-              .clamp(0.0, state.duration.inMilliseconds.toDouble()),
-          onChanged: (value) {
-            service.seek(Duration(milliseconds: value.round()));
-          },
+        SliderTheme(
+          data: SliderTheme.of(context).copyWith(
+            activeTrackColor: Theme.of(context).colorScheme.primary,
+            inactiveTrackColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.3),
+            thumbColor: Theme.of(context).colorScheme.primary,
+            overlayColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.2),
+            thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6),
+            trackHeight: 3,
+          ),
+          child: Slider(
+            min: 0.0,
+            max: state.duration.inMilliseconds.toDouble(),
+            value: state.position.inMilliseconds
+                .toDouble()
+                .clamp(0.0, state.duration.inMilliseconds.toDouble()),
+            onChanged: (value) {
+              service.seek(Duration(milliseconds: value.round()));
+            },
+          ),
         ),
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16.0),
+          padding: const EdgeInsets.symmetric(horizontal: 24.0),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(_formatDuration(state.position)),
-              Text(_formatDuration(state.duration)),
+              Text(
+                _formatDuration(state.position),
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+              Text(
+                _formatDuration(state.duration),
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
             ],
           ),
         ),

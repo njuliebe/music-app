@@ -37,7 +37,7 @@ class _SearchPageState extends ConsumerState<SearchPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Search')),
+      appBar: AppBar(title: const Text('搜索')),
       body: Column(
         children: [_buildSearchBar(), Expanded(child: _buildSearchResults())],
       ),
@@ -54,7 +54,7 @@ class _SearchPageState extends ConsumerState<SearchPage> {
             child: TextField(
               controller: _searchController,
               decoration: InputDecoration(
-                hintText: 'Search for songs, artists, etc.',
+                hintText: '搜索歌曲、歌手等',
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8.0),
                   borderSide: BorderSide.none,
@@ -78,7 +78,7 @@ class _SearchPageState extends ConsumerState<SearchPage> {
                 _searchQuery = _searchController.text;
               });
             },
-            child: const Text('Search'),
+            child: const Text('搜索'),
           ),
         ],
       ),
@@ -88,14 +88,14 @@ class _SearchPageState extends ConsumerState<SearchPage> {
   // 3. 修改 _buildSearchResults 以使用 FutureProvider
   Widget _buildSearchResults() {
     if (_searchQuery.isEmpty) {
-      return const Center(child: Text('Enter a query to search for songs.'));
+      return const Center(child: Text('输入关键词搜索歌曲'));
     }
     final searchResults = ref.watch(searchResultsProvider(_searchQuery));
 
     return searchResults.when(
       data: (songs) {
         if (songs.isEmpty) {
-          return const Center(child: Text('No results found.'));
+          return const Center(child: Text('未找到相关结果'));
         }
         return ListView.builder(
           itemCount: songs.length,
@@ -144,7 +144,7 @@ class _SearchPageState extends ConsumerState<SearchPage> {
                     if (!mounted) return;
                     Navigator.of(context).pop(); // Close the loading indicator
                     ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Failed to load song: $e')),
+                      SnackBar(content: Text('加载歌曲失败: $e')),
                     );
                   }
                 }
@@ -154,7 +154,7 @@ class _SearchPageState extends ConsumerState<SearchPage> {
         );
       },
       loading: () => const Center(child: CircularProgressIndicator()),
-      error: (error, stackTrace) => Center(child: Text('Error: $error')),
+      error: (error, stackTrace) => Center(child: Text('错误: $error')),
     );
   }
 }
