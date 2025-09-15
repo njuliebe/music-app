@@ -13,6 +13,7 @@ class PlayerPage extends ConsumerStatefulWidget {
 
 class _PlayerPageState extends ConsumerState<PlayerPage> {
   final ItemScrollController _scrollController = ItemScrollController();
+  OverlayEntry? _toastOverlay;
 
   @override
   Widget build(BuildContext context) {
@@ -157,6 +158,19 @@ class _PlayerPageState extends ConsumerState<PlayerPage> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
+        // 播放模式按钮
+        IconButton(
+          icon: Icon(
+            _getPlayModeIcon(state.playMode),
+            color: Theme.of(context).colorScheme.primary,
+          ),
+          iconSize: 32.0,
+          onPressed: () {
+            service.togglePlayMode();
+            _showPlayModeToast(context, service.playMode);
+          },
+        ),
+        const SizedBox(width: 16),
         IconButton(
           icon: Icon(
             Icons.skip_previous,
@@ -228,5 +242,80 @@ class _PlayerPageState extends ConsumerState<PlayerPage> {
     final minutes = d.inMinutes.remainder(60).toString().padLeft(2, '0');
     final seconds = d.inSeconds.remainder(60).toString().padLeft(2, '0');
     return "$minutes:$seconds";
+  }
+
+  IconData _getPlayModeIcon(PlayMode mode) {
+    switch (mode) {
+      case PlayMode.sequential:
+        return Icons.repeat;
+      case PlayMode.random:
+        return Icons.shuffle;
+      case PlayMode.loop:
+        return Icons.repeat_one;
+    }
+  }
+
+  String _getPlayModeText(PlayMode mode) {
+    switch (mode) {
+      case PlayMode.sequential:
+        return '列表循环';
+      case PlayMode.random:
+        return '随机播放';
+      case PlayMode.loop:
+        return '单曲循环';
+    }
+  }
+
+  void _showPlayModeToast(BuildContext context, PlayMode mode) {
+    // 移除之前的 toast
+    _toastOverlay?.remove();
+
+    final overlay = Overlay.of(context);
+    final renderBox = context.findRenderObject() as RenderBox;
+    final size = renderBox.size;
+
+    _toastOverlay = OverlayEntry(
+      builder: (context) => Positioned(
+        top: MediaQuery.of(context).padding.top + 80,
+        left: size.width / 2 - 75,
+        child: Material(
+          color: Colors.transparent,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.surface,
+              borderRadius: BorderRadius.circular(24),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.2),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Text(
+              _getPlayModeText(mode),
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: Theme.of(context).colorScheme.onSurface,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    overlay.insert(_toastOverlay!);
+
+    // 1秒后自动移除
+    Future.delayed(const Duration(seconds: 1), () {
+      _toastOverlay?.remove();
+      _toastOverlay = null;
+    });
+  }
+
+  @override
+  void dispose() {
+    _toastOverlay?.remove();
+    super.dispose();
   }
 }

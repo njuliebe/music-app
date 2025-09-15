@@ -24,6 +24,7 @@ mixin _$PlayerState {
   List<LyricLine> get lyrics => throw _privateConstructorUsedError;
   int get currentLyricIndex => throw _privateConstructorUsedError;
   int get playlistSize => throw _privateConstructorUsedError;
+  PlayMode get playMode => throw _privateConstructorUsedError;
 
   @JsonKey(ignore: true)
   $PlayerStateCopyWith<PlayerState> get copyWith =>
@@ -44,7 +45,8 @@ abstract class $PlayerStateCopyWith<$Res> {
       bool isLoadingLyrics,
       List<LyricLine> lyrics,
       int currentLyricIndex,
-      int playlistSize});
+      int playlistSize,
+      PlayMode playMode});
 
   $PlaylistSongCopyWith<$Res>? get currentSong;
 }
@@ -70,6 +72,7 @@ class _$PlayerStateCopyWithImpl<$Res, $Val extends PlayerState>
     Object? lyrics = null,
     Object? currentLyricIndex = null,
     Object? playlistSize = null,
+    Object? playMode = null,
   }) {
     return _then(_value.copyWith(
       isPlaying: null == isPlaying
@@ -104,6 +107,10 @@ class _$PlayerStateCopyWithImpl<$Res, $Val extends PlayerState>
           ? _value.playlistSize
           : playlistSize // ignore: cast_nullable_to_non_nullable
               as int,
+      playMode: null == playMode
+          ? _value.playMode
+          : playMode // ignore: cast_nullable_to_non_nullable
+              as PlayMode,
     ) as $Val);
   }
 
@@ -136,7 +143,8 @@ abstract class _$$PlayerStateImplCopyWith<$Res>
       bool isLoadingLyrics,
       List<LyricLine> lyrics,
       int currentLyricIndex,
-      int playlistSize});
+      int playlistSize,
+      PlayMode playMode});
 
   @override
   $PlaylistSongCopyWith<$Res>? get currentSong;
@@ -161,6 +169,7 @@ class __$$PlayerStateImplCopyWithImpl<$Res>
     Object? lyrics = null,
     Object? currentLyricIndex = null,
     Object? playlistSize = null,
+    Object? playMode = null,
   }) {
     return _then(_$PlayerStateImpl(
       isPlaying: null == isPlaying
@@ -195,6 +204,10 @@ class __$$PlayerStateImplCopyWithImpl<$Res>
           ? _value.playlistSize
           : playlistSize // ignore: cast_nullable_to_non_nullable
               as int,
+      playMode: null == playMode
+          ? _value.playMode
+          : playMode // ignore: cast_nullable_to_non_nullable
+              as PlayMode,
     ));
   }
 }
@@ -210,7 +223,8 @@ class _$PlayerStateImpl implements _PlayerState {
       this.isLoadingLyrics = false,
       final List<LyricLine> lyrics = const [],
       this.currentLyricIndex = -1,
-      this.playlistSize = 0})
+      this.playlistSize = 0,
+      this.playMode = PlayMode.random})
       : _lyrics = lyrics;
 
   @override
@@ -242,10 +256,13 @@ class _$PlayerStateImpl implements _PlayerState {
   @override
   @JsonKey()
   final int playlistSize;
+  @override
+  @JsonKey()
+  final PlayMode playMode;
 
   @override
   String toString() {
-    return 'PlayerState(isPlaying: $isPlaying, currentSong: $currentSong, position: $position, duration: $duration, isLoadingLyrics: $isLoadingLyrics, lyrics: $lyrics, currentLyricIndex: $currentLyricIndex, playlistSize: $playlistSize)';
+    return 'PlayerState(isPlaying: $isPlaying, currentSong: $currentSong, position: $position, duration: $duration, isLoadingLyrics: $isLoadingLyrics, lyrics: $lyrics, currentLyricIndex: $currentLyricIndex, playlistSize: $playlistSize, playMode: $playMode)';
   }
 
   @override
@@ -267,7 +284,9 @@ class _$PlayerStateImpl implements _PlayerState {
             (identical(other.currentLyricIndex, currentLyricIndex) ||
                 other.currentLyricIndex == currentLyricIndex) &&
             (identical(other.playlistSize, playlistSize) ||
-                other.playlistSize == playlistSize));
+                other.playlistSize == playlistSize) &&
+            (identical(other.playMode, playMode) ||
+                other.playMode == playMode));
   }
 
   @override
@@ -280,7 +299,8 @@ class _$PlayerStateImpl implements _PlayerState {
       isLoadingLyrics,
       const DeepCollectionEquality().hash(_lyrics),
       currentLyricIndex,
-      playlistSize);
+      playlistSize,
+      playMode);
 
   @JsonKey(ignore: true)
   @override
@@ -298,7 +318,8 @@ abstract class _PlayerState implements PlayerState {
       final bool isLoadingLyrics,
       final List<LyricLine> lyrics,
       final int currentLyricIndex,
-      final int playlistSize}) = _$PlayerStateImpl;
+      final int playlistSize,
+      final PlayMode playMode}) = _$PlayerStateImpl;
 
   @override
   bool get isPlaying;
@@ -316,6 +337,8 @@ abstract class _PlayerState implements PlayerState {
   int get currentLyricIndex;
   @override
   int get playlistSize;
+  @override
+  PlayMode get playMode;
   @override
   @JsonKey(ignore: true)
   _$$PlayerStateImplCopyWith<_$PlayerStateImpl> get copyWith =>

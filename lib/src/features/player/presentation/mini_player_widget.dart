@@ -23,6 +23,8 @@ class MiniPlayerWidget extends ConsumerWidget {
         final state = snapshot.data!;
         final song = state.currentSong!;
 
+        final isSingleSong = state.playlistSize <= 1;
+
         return GestureDetector(
           onTap: () {
             Navigator.of(context).push(
@@ -32,9 +34,10 @@ class MiniPlayerWidget extends ConsumerWidget {
           child: Container(
             height: 60,
             color: Theme.of(context).colorScheme.surfaceContainerHighest,
-            padding: const EdgeInsets.symmetric(horizontal: 16.0),
+            padding: const EdgeInsets.symmetric(horizontal: 12.0),
             child: Row(
               children: [
+                // 歌曲信息
                 Expanded(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -55,20 +58,49 @@ class MiniPlayerWidget extends ConsumerWidget {
                     ],
                   ),
                 ),
-                IconButton(
-                  icon: Icon(
-                    state.isPlaying
-                        ? Icons.pause_circle_filled
-                        : Icons.play_circle_filled,
-                    size: 32.0,
-                  ),
-                  onPressed: () {
-                    if (state.isPlaying) {
-                      playbackService.pause();
-                    } else {
-                      playbackService.play();
-                    }
-                  },
+                // 播放控制按钮组
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // 上一首按钮
+                    IconButton(
+                      icon: Icon(
+                        Icons.skip_previous,
+                        size: 28.0,
+                        color: isSingleSong
+                            ? Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.3)
+                            : null,
+                      ),
+                      onPressed: isSingleSong ? null : playbackService.playPrevious,
+                    ),
+                    // 播放/暂停按钮
+                    IconButton(
+                      icon: Icon(
+                        state.isPlaying
+                            ? Icons.pause_circle_filled
+                            : Icons.play_circle_filled,
+                        size: 36.0,
+                      ),
+                      onPressed: () {
+                        if (state.isPlaying) {
+                          playbackService.pause();
+                        } else {
+                          playbackService.play();
+                        }
+                      },
+                    ),
+                    // 下一首按钮
+                    IconButton(
+                      icon: Icon(
+                        Icons.skip_next,
+                        size: 28.0,
+                        color: isSingleSong
+                            ? Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.3)
+                            : null,
+                      ),
+                      onPressed: isSingleSong ? null : playbackService.playNext,
+                    ),
+                  ],
                 ),
               ],
             ),

@@ -11,6 +11,13 @@ import 'package:rxdart/rxdart.dart';
 
 part 'playback_service.freezed.dart';
 
+// 播放模式
+enum PlayMode {
+  sequential, // 顺序播放
+  random,     // 随机播放
+  loop,       // 单曲循环
+}
+
 // A data model for a single line of LRC lyrics.
 class LyricLine {
   final Duration timestamp;
@@ -30,6 +37,7 @@ class PlayerState with _$PlayerState {
     @Default([]) List<LyricLine> lyrics,
     @Default(-1) int currentLyricIndex,
     @Default(0) int playlistSize,
+    @Default(PlayMode.random) PlayMode playMode,
   }) = _PlayerState;
 }
 
@@ -52,6 +60,19 @@ class PlaybackService {
   List<PlaylistSong> _playlist = [];
   int? _currentIndex;
 
+  // 播放历史管理
+  final List<PlaylistSong> _playHistory = [];
+  int _historyIndex = -1;
+  static const int _maxHistorySize = 100;
+
+  // 用于避免随机播放重复
+  final Set<int> _recentlyPlayedIndices = {};
+  static const int _recentBufferSize = 3; // 避免最近3首内重复
+
+  // 播放模式
+  PlayMode _playMode = PlayMode.random;
+  final BehaviorSubject<PlayMode> _playModeStream = BehaviorSubject.seeded(PlayMode.random);
+
   final BehaviorSubject<PlaylistSong?> _currentSongStream =
       BehaviorSubject.seeded(null);
   final BehaviorSubject<bool> _isLoadingLyricsStream = BehaviorSubject.seeded(
@@ -67,7 +88,7 @@ class PlaybackService {
   final BehaviorSubject<int> _playlistSizeStream = BehaviorSubject.seeded(0);
 
   Stream<PlayerState> get playerStateStream {
-    return Rx.combineLatest8(
+    return Rx.combineLatest9(
       _audioPlayer.playerStateStream,
       _audioPlayer.positionStream,
       _audioPlayer.durationStream,
@@ -76,6 +97,7 @@ class PlaybackService {
       _lyricsStream,
       _currentLyricIndexStream,
       _playlistSizeStream,
+      _playModeStream,
       (
         playerState,
         position,
@@ -85,6 +107,7 @@ class PlaybackService {
         lyrics,
         lyricIndex,
         playlistSize,
+        playMode,
       ) => PlayerState(
         isPlaying: playerState.playing,
         currentSong: currentSong,
@@ -94,6 +117,7 @@ class PlaybackService {
         lyrics: lyrics,
         currentLyricIndex: lyricIndex,
         playlistSize: playlistSize,
+        playMode: playMode,
       ),
     );
   }
@@ -111,19 +135,37 @@ class PlaybackService {
     }
 
     _currentIndex = startIndex ?? Random().nextInt(_playlist.length);
+
+    // 清空历史并重置
+    _playHistory.clear();
+    _historyIndex = -1;
+    _recentlyPlayedIndices.clear();
+
     await _playCurrent();
   }
 
   Future<void> playNext() async {
     if (_playlist.isEmpty) return;
-    if (_playlist.length == 1) {
+
+    // 单曲循环模式
+    if (_playMode == PlayMode.loop || _playlist.length == 1) {
       await _audioPlayer.seek(Duration.zero);
       await _audioPlayer.play();
       return;
     }
 
     if (_currentIndex != null) {
-      _currentIndex = (_currentIndex! + 1) % _playlist.length;
+      // 添加当前歌曲到播放历史
+      _addToHistory(_playlist[_currentIndex!]);
+
+      // 根据播放模式选择下一首
+      if (_playMode == PlayMode.random) {
+        _currentIndex = _getRandomIndex();
+      } else {
+        // 顺序播放
+        _currentIndex = (_currentIndex! + 1) % _playlist.length;
+      }
+
       await _playCurrent();
     }
   }
@@ -135,18 +177,45 @@ class PlaybackService {
       await _audioPlayer.play();
       return;
     }
+
+    // 优先从播放历史中获取上一首
+    if (_historyIndex > 0 && _historyIndex <= _playHistory.length) {
+      _historyIndex--;
+      final historySong = _playHistory[_historyIndex];
+
+      // 在播放列表中找到对应歌曲的索引
+      final index = _playlist.indexWhere((song) =>
+        song.songTitle == historySong.songTitle &&
+        song.artist == historySong.artist
+      );
+
+      if (index != -1) {
+        _currentIndex = index;
+        await _playCurrent(isFromHistory: true);
+        return;
+      }
+    }
+
+    // 如果没有历史或历史已到头，则播放列表的上一首
     if (_currentIndex != null) {
-      _currentIndex =
-          (_currentIndex! - 1 + _playlist.length) % _playlist.length;
+      _currentIndex = (_currentIndex! - 1 + _playlist.length) % _playlist.length;
       await _playCurrent();
     }
   }
 
-  Future<void> _playCurrent() async {
+  Future<void> _playCurrent({bool isFromHistory = false}) async {
     if (_currentIndex != null) {
       final song = _playlist[_currentIndex!];
       _currentSongStream.add(song);
       _resetLyricState();
+
+      // 更新最近播放索引集合
+      _updateRecentlyPlayed(_currentIndex!);
+
+      // 如果不是从历史导航，则添加到历史
+      if (!isFromHistory) {
+        _addToHistory(song);
+      }
 
       try {
         await _audioPlayer.stop();
@@ -243,6 +312,92 @@ class PlaybackService {
     }
   }
 
+  void _addToHistory(PlaylistSong song) {
+    // 如果正在历史中导航，清除当前位置之后的历史
+    if (_historyIndex >= 0 && _historyIndex < _playHistory.length - 1) {
+      _playHistory.removeRange(_historyIndex + 1, _playHistory.length);
+    }
+
+    // 添加新歌曲到历史
+    _playHistory.add(song);
+
+    // 限制历史大小
+    if (_playHistory.length > _maxHistorySize) {
+      _playHistory.removeAt(0);
+    }
+
+    // 更新历史索引
+    _historyIndex = _playHistory.length - 1;
+  }
+
+  int _getRandomIndex() {
+    if (_playlist.length <= _recentBufferSize) {
+      // 如果歌单很小，直接随机
+      return Random().nextInt(_playlist.length);
+    }
+
+    // 创建可选索引列表（排除最近播放的）
+    final availableIndices = <int>[];
+    for (int i = 0; i < _playlist.length; i++) {
+      if (!_recentlyPlayedIndices.contains(i)) {
+        availableIndices.add(i);
+      }
+    }
+
+    // 如果所有歌曲都最近播放过，清空限制
+    if (availableIndices.isEmpty) {
+      _recentlyPlayedIndices.clear();
+      for (int i = 0; i < _playlist.length; i++) {
+        if (i != _currentIndex) {
+          availableIndices.add(i);
+        }
+      }
+    }
+
+    // 随机选择
+    return availableIndices[Random().nextInt(availableIndices.length)];
+  }
+
+  void _updateRecentlyPlayed(int index) {
+    _recentlyPlayedIndices.add(index);
+
+    // 保持集合大小
+    if (_recentlyPlayedIndices.length > _recentBufferSize) {
+      // 移除最早的（这里简化处理，实际可能需要队列）
+      if (_recentlyPlayedIndices.length > _recentBufferSize) {
+        final toRemove = _recentlyPlayedIndices.length - _recentBufferSize;
+        final sorted = _recentlyPlayedIndices.toList();
+        for (int i = 0; i < toRemove; i++) {
+          _recentlyPlayedIndices.remove(sorted[i]);
+        }
+      }
+    }
+  }
+
+  // 切换播放模式
+  void togglePlayMode() {
+    switch (_playMode) {
+      case PlayMode.sequential:
+        _playMode = PlayMode.random;
+        break;
+      case PlayMode.random:
+        _playMode = PlayMode.loop;
+        break;
+      case PlayMode.loop:
+        _playMode = PlayMode.sequential;
+        break;
+    }
+    _playModeStream.add(_playMode);
+  }
+
+  // 设置播放模式
+  void setPlayMode(PlayMode mode) {
+    _playMode = mode;
+    _playModeStream.add(_playMode);
+  }
+
+  PlayMode get playMode => _playMode;
+
   void dispose() {
     _audioPlayer.dispose();
     _currentSongStream.close();
@@ -250,5 +405,6 @@ class PlaybackService {
     _lyricsStream.close();
     _currentLyricIndexStream.close();
     _playlistSizeStream.close();
+    _playModeStream.close();
   }
 }
