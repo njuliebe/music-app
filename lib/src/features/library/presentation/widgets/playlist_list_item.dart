@@ -10,6 +10,41 @@ class PlaylistListItem extends ConsumerWidget {
   final Playlist playlist;
 
   Widget _buildSourceBadge(BuildContext context) {
+    // Show badge for custom playlists
+    if (playlist.type == PlaylistType.created) {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(4),
+          border: Border.all(
+            color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.3),
+            width: 0.5,
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.person,
+              size: 12,
+              color: Theme.of(context).colorScheme.primary,
+            ),
+            const SizedBox(width: 3),
+            Text(
+              '自建',
+              style: TextStyle(
+                fontSize: 10,
+                color: Theme.of(context).colorScheme.primary,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    // Show badge for imported playlists
     if (playlist.source == null) return const SizedBox.shrink();
 
     final Map<PlaylistSource, Map<String, dynamic>> sourceConfig = {
@@ -31,10 +66,10 @@ class PlaylistListItem extends ConsumerWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
       decoration: BoxDecoration(
-        color: (config['color'] as Color).withOpacity(0.1),
+        color: (config['color'] as Color).withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(4),
         border: Border.all(
-          color: (config['color'] as Color).withOpacity(0.3),
+          color: (config['color'] as Color).withValues(alpha: 0.3),
           width: 0.5,
         ),
       ),
@@ -71,20 +106,21 @@ class PlaylistListItem extends ConsumerWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              ListTile(
-                leading: const Icon(Icons.refresh),
-                title: const Text('刷新歌单'),
-                subtitle: playlist.originalUrl != null
-                    ? const Text('重新获取歌单最新内容')
-                    : const Text('此歌单不支持刷新'),
-                enabled: playlist.originalUrl != null,
-                onTap: playlist.originalUrl != null
-                    ? () async {
-                        Navigator.pop(context);
-                        _refreshPlaylist(context, ref);
-                      }
-                    : null,
-              ),
+              if (playlist.type != PlaylistType.created)
+                ListTile(
+                  leading: const Icon(Icons.refresh),
+                  title: const Text('刷新歌单'),
+                  subtitle: playlist.originalUrl != null
+                      ? const Text('重新获取歌单最新内容')
+                      : const Text('此歌单不支持刷新'),
+                  enabled: playlist.originalUrl != null,
+                  onTap: playlist.originalUrl != null
+                      ? () async {
+                          Navigator.pop(context);
+                          _refreshPlaylist(context, ref);
+                        }
+                      : null,
+                ),
               ListTile(
                 leading: const Icon(Icons.delete, color: Colors.red),
                 title: const Text('删除歌单', style: TextStyle(color: Colors.red)),

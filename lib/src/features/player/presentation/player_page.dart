@@ -5,6 +5,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:music_app/src/core/services/playback_service.dart';
 import 'package:music_app/src/features/player/presentation/providers/playback_provider.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
+import 'package:music_app/src/data/models/playlist_song.dart';
+import 'package:music_app/main.dart';
 
 class PlayerPage extends ConsumerStatefulWidget {
   const PlayerPage({super.key});
@@ -108,6 +110,14 @@ class _PlayerPageState extends ConsumerState<PlayerPage> {
             title: const Text("正在播放"),
             centerTitle: true,
             backgroundColor: Colors.transparent,
+            actions: [
+              IconButton(
+                icon: const Icon(Icons.playlist_play),
+                onPressed: () {
+                  _showPlaylistSheet(context, ref);
+                },
+              ),
+            ],
           ),
           body: SafeArea(
             child: Stack(
@@ -256,6 +266,21 @@ class _PlayerPageState extends ConsumerState<PlayerPage> {
               onPressed: () {
                 service.togglePlayMode();
                 _showPlayModeToast(context, service.playMode);
+              },
+            ),
+          ),
+          // 收藏按钮
+          Flexible(
+            child: IconButton(
+              icon: Icon(
+                Icons.favorite_border,
+                color: Theme.of(context).colorScheme.primary,
+              ),
+              iconSize: isSmallScreen ? 28.0 : 32.0,
+              onPressed: () {
+                if (state.currentSong != null) {
+                  _showCollectDialog(context, ref, state.currentSong);
+                }
               },
             ),
           ),
@@ -440,6 +465,203 @@ class _PlayerPageState extends ConsumerState<PlayerPage> {
       _toastOverlay?.remove();
       _toastOverlay = null;
     });
+  }
+
+  void _showPlaylistSheet(BuildContext context, WidgetRef ref) {
+    final playbackService = ref.read(playbackServiceProvider);
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => DraggableScrollableSheet(
+        initialChildSize: 0.7,
+        minChildSize: 0.5,
+        maxChildSize: 0.9,
+        builder: (context, scrollController) {
+          return Container(
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.surface,
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+            ),
+            child: StreamBuilder<PlayerState>(
+              stream: playbackService.playerStateStream,
+              builder: (context, snapshot) {
+                if (!snapshot.hasData || snapshot.data?.currentSong == null) {
+                  return const Center(child: Text('播放列表为空'));
+                }
+
+                // Get playlist from playback service directly
+                final playlist = playbackService.playlist;
+                final currentIndex = playbackService.currentIndex;
+
+                return Column(
+                  children: [
+                    // Handle bar
+                    Container(
+                      margin: const EdgeInsets.only(top: 12),
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.4),
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                    // Title
+                    Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            '播放列表 (${playlist.length}首)',
+                            style: Theme.of(context).textTheme.titleLarge,
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.close),
+                            onPressed: () => Navigator.pop(context),
+                          ),
+                        ],
+                      ),
+                    ),
+                    // Playlist
+                    Expanded(
+                      child: ListView.builder(
+                        controller: scrollController,
+                        itemCount: playlist.length,
+                        itemBuilder: (context, index) {
+                          final song = playlist[index];
+                          final isPlaying = index == currentIndex;
+
+                          return ListTile(
+                            leading: isPlaying
+                                ? Icon(
+                                    Icons.music_note,
+                                    color: Theme.of(context).colorScheme.primary,
+                                  )
+                                : Text(
+                                    '${index + 1}',
+                                    style: Theme.of(context).textTheme.bodyMedium,
+                                  ),
+                            title: Text(
+                              song.songTitle,
+                              style: TextStyle(
+                                color: isPlaying
+                                    ? Theme.of(context).colorScheme.primary
+                                    : null,
+                                fontWeight: isPlaying ? FontWeight.bold : null,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            subtitle: Text(
+                              song.artist,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            trailing: IconButton(
+                              icon: const Icon(Icons.bookmark_border, size: 20),
+                              onPressed: () {
+                                _showCollectDialog(context, ref, song);
+                              },
+                            ),
+                            onTap: () {
+                              if (!isPlaying) {
+                                playbackService.playAt(index);
+                                Navigator.pop(context);
+                              }
+                            },
+                          );
+                        },
+                      ),
+                    ),
+                  ],
+                );
+              },
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  void _showCollectDialog(BuildContext context, WidgetRef ref, dynamic song) async {
+    // Import the playlist repository provider
+    final playlistRepository = ref.read(playlistRepositoryProvider);
+
+    // Get custom playlists
+    final customPlaylists = await playlistRepository.getCustomPlaylists();
+
+    if (customPlaylists.isEmpty && context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('请先创建自建歌单')),
+      );
+      return;
+    }
+
+    if (!context.mounted) return;
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('收藏到歌单'),
+        content: SizedBox(
+          width: double.maxFinite,
+          child: ListView.builder(
+            shrinkWrap: true,
+            itemCount: customPlaylists.length,
+            itemBuilder: (context, index) {
+              final playlist = customPlaylists[index];
+              return ListTile(
+                leading: const Icon(Icons.playlist_add),
+                title: Text(playlist.name),
+                subtitle: playlist.description != null
+                    ? Text(playlist.description!, maxLines: 1, overflow: TextOverflow.ellipsis)
+                    : null,
+                onTap: () async {
+                  Navigator.pop(context);
+                  await _collectSongToPlaylist(context, ref, song, playlist.sourceId);
+                },
+              );
+            },
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('取消'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _collectSongToPlaylist(BuildContext context, WidgetRef ref, dynamic song, String playlistId) async {
+    try {
+      final playlistRepository = ref.read(playlistRepositoryProvider);
+
+      // Create a PlaylistSong from the current song
+      final playlistSong = PlaylistSong(
+        playlistId: playlistId,
+        songTitle: song.songTitle,
+        artist: song.artist,
+        playUrl: song.playUrl ?? '',
+      );
+
+      await playlistRepository.addSongToPlaylist(playlistId, playlistSong);
+
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('已收藏到歌单')),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('收藏失败: $e')),
+        );
+      }
+    }
   }
 
   @override

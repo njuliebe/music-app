@@ -129,6 +129,8 @@ class PlaybackService {
   }
 
   PlaylistSong? get currentSong => _currentSongStream.value;
+  List<PlaylistSong> get playlist => _playlist;
+  int? get currentIndex => _currentIndex;
 
   Future<void> start(List<PlaylistSong> playlist, {int? startIndex}) async {
     _playlist = List.from(playlist);
@@ -186,6 +188,13 @@ class PlaybackService {
 
       await _playCurrent();
     }
+  }
+
+  Future<void> playAt(int index) async {
+    if (_playlist.isEmpty || index < 0 || index >= _playlist.length) return;
+
+    _currentIndex = index;
+    await _playCurrent();
   }
 
   Future<void> playPrevious() async {

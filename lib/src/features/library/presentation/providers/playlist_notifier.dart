@@ -101,6 +101,14 @@ class PlaylistsNotifier extends StateNotifier<PaginationState<Playlist>> {
       throw Exception('刷新歌单失败: $e');
     }
   }
+
+  Future<void> createPlaylist(String name, String? description) async {
+    // Create playlist in database
+    await _repository.createPlaylist(name, description);
+
+    // Refresh the list to show new playlist
+    await refresh();
+  }
 }
 
 // 3. The Provider

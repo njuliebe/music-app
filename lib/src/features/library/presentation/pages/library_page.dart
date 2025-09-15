@@ -48,7 +48,7 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
           IconButton(
             icon: const Icon(Icons.add),
             onPressed: () {
-              // TODO: Implement create playlist functionality
+              _showCreatePlaylistDialog(context, ref);
             },
           ),
           IconButton(
@@ -110,6 +110,79 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
         ),
       ),
     );
+  }
+
+  void _showCreatePlaylistDialog(BuildContext context, WidgetRef ref) {
+    final TextEditingController nameController = TextEditingController();
+    final TextEditingController descriptionController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('创建歌单'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: nameController,
+              decoration: const InputDecoration(
+                labelText: '歌单名称',
+                hintText: '请输入歌单名称',
+              ),
+              autofocus: true,
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: descriptionController,
+              decoration: const InputDecoration(
+                labelText: '歌单描述（可选）',
+                hintText: '请输入歌单描述',
+              ),
+              maxLines: 2,
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('取消'),
+          ),
+          TextButton(
+            onPressed: () async {
+              final name = nameController.text.trim();
+              if (name.isEmpty) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('请输入歌单名称')),
+                );
+                return;
+              }
+
+              Navigator.of(context).pop();
+              await _createPlaylist(context, ref, name, descriptionController.text.trim());
+            },
+            child: const Text('创建'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _createPlaylist(BuildContext context, WidgetRef ref, String name, String description) async {
+    try {
+      await ref.read(playlistsNotifierProvider.notifier).createPlaylist(name, description);
+
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('歌单"$name"创建成功')),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('创建失败: $e')),
+        );
+      }
+    }
   }
 
   void _importPlaylist(BuildContext context, WidgetRef ref, String playlistUrl) async {

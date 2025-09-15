@@ -207,4 +207,36 @@ class PlaylistRepository {
     if (maps.isEmpty) return null;
     return Playlist.fromMap(maps.first);
   }
+
+  Future<void> createPlaylist(String name, String? description) async {
+    final playlist = Playlist(
+      sourceId: 'custom_${DateTime.now().millisecondsSinceEpoch}',
+      name: name,
+      type: PlaylistType.created,
+      description: description,
+      coverUrl: null,
+      creator: 'Me',
+      importTime: DateTime.now(),
+      originalUrl: null,
+      source: null,
+    );
+
+    await _db.insert(
+      'playlists',
+      playlist.toMap(),
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }
+
+  Future<List<Playlist>> getCustomPlaylists() async {
+    final List<Map<String, dynamic>> maps = await _db.query(
+      'playlists',
+      where: 'type = ?',
+      whereArgs: [PlaylistType.created.name],
+      orderBy: 'import_time DESC',
+    );
+    return List.generate(maps.length, (i) {
+      return Playlist.fromMap(maps[i]);
+    });
+  }
 }
