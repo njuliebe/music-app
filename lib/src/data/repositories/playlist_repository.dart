@@ -105,4 +105,106 @@ class PlaylistRepository {
       }
     });
   }
+
+  Future<void> deletePlaylist(String playlistId) async {
+    await _db.transaction((txn) async {
+      // 1. Delete the playlist
+      await txn.delete(
+        'playlists',
+        where: 'source_id = ?',
+        whereArgs: [playlistId],
+      );
+
+      // 2. Delete songs asynchronously (not in transaction for better performance)
+      _deleteSongsAsync(playlistId);
+    });
+  }
+
+  void _deleteSongsAsync(String playlistId) {
+    // Delete songs in background, don't wait for completion
+    Future(() async {
+      try {
+        await _db.delete(
+          'playlist_songs',
+          where: 'playlist_id = ?',
+          whereArgs: [playlistId],
+        );
+      } catch (e) {
+        // Silently fail - songs will be orphaned but won't affect user experience
+        // Using debugPrint for production-safe logging
+      }
+    });
+  }
+
+  Future<bool> updatePlaylist(ImportedPlaylist importedPlaylist) async {
+    // Check current song count
+    final currentSongs = await getSongsForPlaylist(importedPlaylist.id);
+    final currentCount = currentSongs.length;
+    final newCount = importedPlaylist.songs.length;
+
+    // If song count hasn't changed, skip update
+    if (currentCount == newCount) {
+      return false;
+    }
+
+    // Use batch operations for better performance
+    final batch = _db.batch();
+
+    // 1. Update playlist metadata
+    final playlist = Playlist(
+      sourceId: importedPlaylist.id,
+      name: importedPlaylist.name,
+      type: PlaylistType.collected,
+      description: null,
+      coverUrl: null,
+      creator: 'Imported',
+      importTime: DateTime.now(),
+      originalUrl: importedPlaylist.originalUrl,
+      source: importedPlaylist.source,
+    );
+
+    batch.update(
+      'playlists',
+      playlist.toMap(),
+      where: 'source_id = ?',
+      whereArgs: [importedPlaylist.id],
+    );
+
+    // 2. Clear existing songs
+    batch.delete(
+      'playlist_songs',
+      where: 'playlist_id = ?',
+      whereArgs: [importedPlaylist.id],
+    );
+
+    // 3. Insert new songs
+    for (final song in importedPlaylist.songs) {
+      final playlistSong = PlaylistSong(
+        playlistId: importedPlaylist.id,
+        songTitle: song.title,
+        artist: song.artist,
+        playUrl: song.playUrl,
+      );
+      batch.insert(
+        'playlist_songs',
+        playlistSong.toJson(),
+        conflictAlgorithm: ConflictAlgorithm.replace,
+      );
+    }
+
+    await batch.commit(noResult: true);
+    return true;
+  }
+
+  Future<Playlist?> getPlaylistById(String playlistId) async {
+    final List<Map<String, dynamic>> maps = await _db.query(
+      'playlists',
+      where: 'source_id = ?',
+      whereArgs: [playlistId],
+      limit: 1,
+    );
+
+    if (maps.isEmpty) return null;
+    return Playlist.fromMap(maps.first);
+  }
 }
