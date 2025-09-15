@@ -59,6 +59,12 @@ class PlaybackService {
 
   List<PlaylistSong> _playlist = [];
   int? _currentIndex;
+  int? _predeterminedNextIndex; // 预先确定的下一首索引（随机模式）
+
+  // 缓存机制
+  final Map<String, Song> _songCache = {};
+  final Map<String, List<LyricLine>> _lyricsCache = {};
+  static const int _maxCacheSize = 10; // 最大缓存歌曲数
 
   // 播放历史管理
   final List<PlaylistSong> _playHistory = [];
@@ -140,6 +146,11 @@ class PlaybackService {
     _playHistory.clear();
     _historyIndex = -1;
     _recentlyPlayedIndices.clear();
+    _predeterminedNextIndex = null;
+
+    // 清空缓存
+    _songCache.clear();
+    _lyricsCache.clear();
 
     await _playCurrent();
   }
@@ -160,7 +171,13 @@ class PlaybackService {
 
       // 根据播放模式选择下一首
       if (_playMode == PlayMode.random) {
-        _currentIndex = _getRandomIndex();
+        // 使用预先确定的下一首索引
+        if (_predeterminedNextIndex != null) {
+          _currentIndex = _predeterminedNextIndex;
+          _predeterminedNextIndex = null; // 清空预设
+        } else {
+          _currentIndex = _getRandomIndex();
+        }
       } else {
         // 顺序播放
         _currentIndex = (_currentIndex! + 1) % _playlist.length;
@@ -219,12 +236,15 @@ class PlaybackService {
 
       try {
         await _audioPlayer.stop();
-        final detailedSong = await getDetailedSong(song);
-        _searchLyrics(detailedSong.title);
+        final detailedSong = await _getCachedSongDetail(song);
+        await _loadCachedLyrics(detailedSong.title);
 
         if (detailedSong.playUrl != null && detailedSong.playUrl!.isNotEmpty) {
           await _audioPlayer.setUrl(detailedSong.playUrl!);
           play();
+
+          // 预加载下一首和上一首
+          _preloadNextAndPrevious();
         } else {
           playNext();
         }
@@ -240,24 +260,36 @@ class PlaybackService {
     _currentLyricIndexStream.add(-1);
   }
 
-  Future<void> _searchLyrics(String title) async {
-    try {
-      final lyrics = await _lyricRepository.searchLyrics(title);
-      if (lyrics.isEmpty) {
-        _lyricsStream.add([]);
-      } else if (lyrics.first.syncedLyrics != null) {
-        final parsed = _parseLyrics(lyrics.first.syncedLyrics!);
-        _lyricsStream.add(parsed);
-      } else if (lyrics.first.plainLyrics != null) {
-        // Could parse plain lyrics if needed
-        _lyricsStream.add([]);
-      } else {
-        _lyricsStream.add([]);
-      }
-    } catch (e) {
-      _lyricsStream.add([]);
-    } finally {
+
+  Future<void> _loadCachedLyrics(String title) async {
+    final cacheKey = _getLyricsCacheKey(title);
+
+    // 检查缓存
+    if (_lyricsCache.containsKey(cacheKey)) {
+      _lyricsStream.add(_lyricsCache[cacheKey]!);
       _isLoadingLyricsStream.add(false);
+    } else {
+      // 异步加载歌词
+      _isLoadingLyricsStream.add(true);
+      try {
+        final lyrics = await _lyricRepository.searchLyrics(title);
+        List<LyricLine> parsedLyrics = [];
+
+        if (lyrics.isNotEmpty && lyrics.first.syncedLyrics != null) {
+          parsedLyrics = _parseLyrics(lyrics.first.syncedLyrics!);
+        }
+
+        // 缓存歌词
+        _lyricsCache[cacheKey] = parsedLyrics;
+        _manageLyricsCache();
+
+        // 更新歌词流
+        _lyricsStream.add(parsedLyrics);
+      } catch (e) {
+        _lyricsStream.add([]);
+      } finally {
+        _isLoadingLyricsStream.add(false);
+      }
     }
   }
 
@@ -309,6 +341,123 @@ class PlaybackService {
       return await _musicRepository.getSongDetail(songs.first);
     } else {
       throw Exception('Song not found: ${playlistSong.songTitle}');
+    }
+  }
+
+  Future<Song> _getCachedSongDetail(PlaylistSong playlistSong) async {
+    final cacheKey = _getSongCacheKey(playlistSong);
+
+    // 检查缓存
+    if (_songCache.containsKey(cacheKey)) {
+      return _songCache[cacheKey]!;
+    }
+
+    // 未缓存，获取并缓存
+    final song = await getDetailedSong(playlistSong);
+    _songCache[cacheKey] = song;
+    _manageSongCache();
+
+    return song;
+  }
+
+  Future<void> _preloadSong(PlaylistSong playlistSong) async {
+    final cacheKey = _getSongCacheKey(playlistSong);
+
+    // 如果已缓存，跳过
+    if (_songCache.containsKey(cacheKey)) {
+      return;
+    }
+
+    try {
+      final song = await getDetailedSong(playlistSong);
+      _songCache[cacheKey] = song;
+      _manageSongCache();
+
+      // 同时预加载歌词
+      _preloadLyrics(song.title);
+    } catch (e) {
+      // 预加载失败，静默处理
+    }
+  }
+
+  Future<void> _preloadLyrics(String title) async {
+    final cacheKey = _getLyricsCacheKey(title);
+
+    // 如果已缓存，跳过
+    if (_lyricsCache.containsKey(cacheKey)) {
+      return;
+    }
+
+    try {
+      final lyrics = await _lyricRepository.searchLyrics(title);
+      List<LyricLine> parsedLyrics = [];
+
+      if (lyrics.isNotEmpty && lyrics.first.syncedLyrics != null) {
+        parsedLyrics = _parseLyrics(lyrics.first.syncedLyrics!);
+      }
+
+      _lyricsCache[cacheKey] = parsedLyrics;
+      _manageLyricsCache();
+    } catch (e) {
+      // 预加载失败，静默处理
+    }
+  }
+
+  void _preloadNextAndPrevious() {
+    if (_playlist.isEmpty || _currentIndex == null) return;
+
+    // 预加载下一首
+    if (_playMode == PlayMode.loop) {
+      // 单曲循环不需要预加载
+      return;
+    } else if (_playMode == PlayMode.random) {
+      // 随机模式，提前确定下一首
+      _predeterminedNextIndex = _getRandomIndex();
+      if (_predeterminedNextIndex != null) {
+        _preloadSong(_playlist[_predeterminedNextIndex!]);
+      }
+    } else {
+      // 顺序播放
+      final nextIndex = (_currentIndex! + 1) % _playlist.length;
+      _preloadSong(_playlist[nextIndex]);
+    }
+
+    // 预加载上一首
+    if (_historyIndex > 0 && _historyIndex <= _playHistory.length) {
+      final historySong = _playHistory[_historyIndex - 1];
+      _preloadSong(historySong);
+    } else if (_currentIndex != null) {
+      final prevIndex = (_currentIndex! - 1 + _playlist.length) % _playlist.length;
+      _preloadSong(_playlist[prevIndex]);
+    }
+  }
+
+  String _getSongCacheKey(PlaylistSong song) {
+    return '${song.songTitle}_${song.artist}'.replaceAll(' ', '_');
+  }
+
+  String _getLyricsCacheKey(String title) {
+    return title.replaceAll(' ', '_');
+  }
+
+  void _manageSongCache() {
+    // 限制缓存大小
+    if (_songCache.length > _maxCacheSize) {
+      // 简单的FIFO策略，移除最早的
+      final keysToRemove = _songCache.keys.take(_songCache.length - _maxCacheSize).toList();
+      for (final key in keysToRemove) {
+        _songCache.remove(key);
+      }
+    }
+  }
+
+  void _manageLyricsCache() {
+    // 限制缓存大小
+    if (_lyricsCache.length > _maxCacheSize) {
+      final keysToRemove = _lyricsCache.keys.take(_lyricsCache.length - _maxCacheSize).toList();
+      for (final key in keysToRemove) {
+        _lyricsCache.remove(key);
+      }
     }
   }
 
@@ -388,12 +537,42 @@ class PlaybackService {
         break;
     }
     _playModeStream.add(_playMode);
+
+    // 播放模式切换时，重新预加载
+    if (_playMode == PlayMode.random) {
+      _predeterminedNextIndex = _getRandomIndex();
+      if (_predeterminedNextIndex != null) {
+        _preloadSong(_playlist[_predeterminedNextIndex!]);
+      }
+    } else {
+      _predeterminedNextIndex = null;
+      // 预加载顺序播放的下一首
+      if (_playMode == PlayMode.sequential && _currentIndex != null) {
+        final nextIndex = (_currentIndex! + 1) % _playlist.length;
+        _preloadSong(_playlist[nextIndex]);
+      }
+    }
   }
 
   // 设置播放模式
   void setPlayMode(PlayMode mode) {
     _playMode = mode;
     _playModeStream.add(_playMode);
+
+    // 播放模式切换时，重新预加载
+    if (_playMode == PlayMode.random) {
+      _predeterminedNextIndex = _getRandomIndex();
+      if (_predeterminedNextIndex != null) {
+        _preloadSong(_playlist[_predeterminedNextIndex!]);
+      }
+    } else {
+      _predeterminedNextIndex = null;
+      // 预加载顺序播放的下一首
+      if (_playMode == PlayMode.sequential && _currentIndex != null) {
+        final nextIndex = (_currentIndex! + 1) % _playlist.length;
+        _preloadSong(_playlist[nextIndex]);
+      }
+    }
   }
 
   PlayMode get playMode => _playMode;
@@ -406,5 +585,7 @@ class PlaybackService {
     _currentLyricIndexStream.close();
     _playlistSizeStream.close();
     _playModeStream.close();
+    _songCache.clear();
+    _lyricsCache.clear();
   }
 }
