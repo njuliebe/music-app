@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:music_app/src/data/models/playlist.dart';
 import 'package:music_app/src/features/library/presentation/pages/playlist_detail_page.dart';
 import 'package:music_app/src/features/library/presentation/providers/playlist_notifier.dart';
+import 'package:music_app/src/shared/theme/app_theme.dart';
 
 class PlaylistListItem extends ConsumerWidget {
   const PlaylistListItem({super.key, required this.playlist});
@@ -15,10 +16,10 @@ class PlaylistListItem extends ConsumerWidget {
       return Container(
         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
         decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
+          color: AppTheme.accentPurple.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(4),
           border: Border.all(
-            color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.3),
+            color: AppTheme.accentPurple.withValues(alpha: 0.3),
             width: 0.5,
           ),
         ),
@@ -28,14 +29,14 @@ class PlaylistListItem extends ConsumerWidget {
             Icon(
               Icons.person,
               size: 12,
-              color: Theme.of(context).colorScheme.primary,
+              color: AppTheme.accentPurple,
             ),
             const SizedBox(width: 3),
             Text(
               '自建',
               style: TextStyle(
                 fontSize: 10,
-                color: Theme.of(context).colorScheme.primary,
+                color: AppTheme.accentPurple,
                 fontWeight: FontWeight.w500,
               ),
             ),
@@ -98,21 +99,31 @@ class PlaylistListItem extends ConsumerWidget {
   void _showPlaylistMenu(BuildContext context, WidgetRef ref) {
     showModalBottomSheet(
       context: context,
+      backgroundColor: AppTheme.backgroundCard,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (BuildContext context) {
         return SafeArea(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
+              Container(
+                width: 40,
+                height: 4,
+                margin: const EdgeInsets.symmetric(vertical: 12),
+                decoration: BoxDecoration(
+                  color: AppTheme.divider,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
               if (playlist.type != PlaylistType.created)
                 ListTile(
-                  leading: const Icon(Icons.refresh),
-                  title: const Text('刷新歌单'),
+                  leading: const Icon(Icons.refresh_rounded, color: AppTheme.textPrimary),
+                  title: const Text('刷新歌单', style: TextStyle(color: AppTheme.textPrimary)),
                   subtitle: playlist.originalUrl != null
-                      ? const Text('重新获取歌单最新内容')
-                      : const Text('此歌单不支持刷新'),
+                      ? Text('重新获取歌单最新内容', style: TextStyle(color: AppTheme.textSecondary))
+                      : Text('此歌单不支持刷新', style: TextStyle(color: AppTheme.textHint)),
                   enabled: playlist.originalUrl != null,
                   onTap: playlist.originalUrl != null
                       ? () async {
@@ -122,20 +133,15 @@ class PlaylistListItem extends ConsumerWidget {
                       : null,
                 ),
               ListTile(
-                leading: const Icon(Icons.delete, color: Colors.red),
-                title: const Text('删除歌单', style: TextStyle(color: Colors.red)),
-                subtitle: const Text('删除歌单及其所有歌曲'),
+                leading: const Icon(Icons.delete_rounded, color: AppTheme.error),
+                title: const Text('删除歌单', style: TextStyle(color: AppTheme.error)),
+                subtitle: Text('删除歌单及其所有歌曲', style: TextStyle(color: AppTheme.error.withValues(alpha: 0.7))),
                 onTap: () {
                   Navigator.pop(context);
                   _confirmDelete(context, ref);
                 },
               ),
-              const Divider(height: 1),
-              ListTile(
-                leading: const Icon(Icons.close),
-                title: const Text('取消'),
-                onTap: () => Navigator.pop(context),
-              ),
+              const SizedBox(height: 8),
             ],
           ),
         );
@@ -148,8 +154,12 @@ class PlaylistListItem extends ConsumerWidget {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('确认删除'),
-          content: Text('确定要删除歌单"${playlist.name}"吗？此操作不可恢复。'),
+          backgroundColor: AppTheme.backgroundCard,
+          title: const Text('确认删除', style: TextStyle(color: AppTheme.textPrimary)),
+          content: Text(
+            '确定要删除歌单"${playlist.name}"吗？此操作不可恢复。',
+            style: const TextStyle(color: AppTheme.textSecondary),
+          ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
@@ -160,7 +170,7 @@ class PlaylistListItem extends ConsumerWidget {
                 Navigator.pop(context);
                 await _deletePlaylist(context, ref);
               },
-              style: TextButton.styleFrom(foregroundColor: Colors.red),
+              style: TextButton.styleFrom(foregroundColor: AppTheme.error),
               child: const Text('删除'),
             ),
           ],
@@ -175,13 +185,19 @@ class PlaylistListItem extends ConsumerWidget {
 
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('歌单"${playlist.name}"已删除')),
+          SnackBar(
+            backgroundColor: AppTheme.backgroundCard,
+            content: Text('歌单"${playlist.name}"已删除', style: const TextStyle(color: AppTheme.textPrimary)),
+          ),
         );
       }
     } catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('删除失败: $e')),
+          SnackBar(
+            backgroundColor: AppTheme.error,
+            content: Text('删除失败: $e', style: const TextStyle(color: AppTheme.textPrimary)),
+          ),
         );
       }
     }
@@ -192,19 +208,23 @@ class PlaylistListItem extends ConsumerWidget {
       // Show loading indicator
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
+          SnackBar(
+            backgroundColor: AppTheme.backgroundCard,
             content: Row(
               children: [
                 SizedBox(
                   width: 20,
                   height: 20,
-                  child: CircularProgressIndicator(strokeWidth: 2),
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: AppTheme.accentPurple,
+                  ),
                 ),
-                SizedBox(width: 12),
-                Text('正在刷新歌单...'),
+                const SizedBox(width: 12),
+                const Text('正在刷新歌单...', style: TextStyle(color: AppTheme.textPrimary)),
               ],
             ),
-            duration: Duration(seconds: 30),
+            duration: const Duration(seconds: 30),
           ),
         );
       }
@@ -216,54 +236,126 @@ class PlaylistListItem extends ConsumerWidget {
       if (context.mounted) {
         ScaffoldMessenger.of(context).clearSnackBars();
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(message)),
+          SnackBar(
+            backgroundColor: AppTheme.backgroundCard,
+            content: Text(message, style: const TextStyle(color: AppTheme.textPrimary)),
+          ),
         );
       }
     } catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).clearSnackBars();
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('刷新失败: $e')),
+          SnackBar(
+            backgroundColor: AppTheme.error,
+            content: Text('刷新失败: $e', style: const TextStyle(color: AppTheme.textPrimary)),
+          ),
         );
       }
     }
   }
 
+  String _formatDate(DateTime date) {
+    return '${date.year}年${date.month.toString().padLeft(2, '0')}月${date.day.toString().padLeft(2, '0')}日';
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return ListTile(
-      leading: const Icon(Icons.music_note_rounded, size: 40), // 临时用图标代替封面
-      title: Row(
-        children: [
-          Expanded(
-            child: Text(
-              playlist.name,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-          const SizedBox(width: 8),
-          _buildSourceBadge(context),
-        ],
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      decoration: BoxDecoration(
+        color: AppTheme.backgroundCard,
+        borderRadius: BorderRadius.circular(12),
       ),
-      subtitle: Text(
-        '${playlist.type == PlaylistType.created ? "创建者" : "收藏者"}: ${playlist.creator ?? '未知'}',
-      ),
-      trailing: IconButton(
-        icon: const Icon(Icons.more_vert),
-        onPressed: () => _showPlaylistMenu(context, ref),
-      ),
-      onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder:
-                (context) => PlaylistDetailPage(
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(12),
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => PlaylistDetailPage(
                   playlistId: playlist.sourceId,
                   playlistName: playlist.name,
                 ),
+              ),
+            );
+          },
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: Row(
+              children: [
+                // 歌单图标
+                Container(
+                  width: 56,
+                  height: 56,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        AppTheme.accentPurple.withValues(alpha: 0.8),
+                        AppTheme.accentBlue.withValues(alpha: 0.8),
+                      ],
+                    ),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(
+                    Icons.library_music_rounded,
+                    color: AppTheme.textPrimary,
+                    size: 28,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                // 歌单信息
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              playlist.name,
+                              style: const TextStyle(
+                                color: AppTheme.textPrimary,
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          _buildSourceBadge(context),
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        '更新于 ${_formatDate(playlist.importTime)}',
+                        style: const TextStyle(
+                          color: AppTheme.textSecondary,
+                          fontSize: 13,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                // 更多选项按钮
+                IconButton(
+                  icon: const Icon(
+                    Icons.more_vert_rounded,
+                    color: AppTheme.textHint,
+                    size: 20,
+                  ),
+                  onPressed: () => _showPlaylistMenu(context, ref),
+                ),
+              ],
+            ),
           ),
-        );
-      },
+        ),
+      ),
     );
   }
 }

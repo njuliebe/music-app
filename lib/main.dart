@@ -121,10 +121,8 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Music App',
-      theme: AppTheme.lightTheme,
-      darkTheme: AppTheme.darkTheme,
-      themeMode: ThemeMode.system,
+      title: 'MusicX',
+      theme: AppTheme.theme,
       home: const MainScaffold(),
     );
   }

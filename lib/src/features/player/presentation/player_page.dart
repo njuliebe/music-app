@@ -251,43 +251,32 @@ class _PlayerPageState extends ConsumerState<PlayerPage> {
     final isSmallScreen = screenWidth < 360;
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
           // 播放模式按钮
-          Flexible(
+          SizedBox(
+            width: 48,
             child: IconButton(
               icon: Icon(
                 _getPlayModeIcon(state.playMode),
                 color: Theme.of(context).colorScheme.primary,
               ),
-              iconSize: isSmallScreen ? 28.0 : 32.0,
+              iconSize: isSmallScreen ? 22.0 : 24.0,
+              padding: const EdgeInsets.all(8),
               onPressed: () {
                 service.togglePlayMode();
                 _showPlayModeToast(context, service.playMode);
               },
             ),
           ),
-          // 收藏按钮
-          Flexible(
+          // 上一首按钮
+          SizedBox(
+            width: 48,
             child: IconButton(
               icon: Icon(
-                Icons.favorite_border,
-                color: Theme.of(context).colorScheme.primary,
-              ),
-              iconSize: isSmallScreen ? 28.0 : 32.0,
-              onPressed: () {
-                if (state.currentSong != null) {
-                  _showCollectDialog(context, ref, state.currentSong);
-                }
-              },
-            ),
-          ),
-          Flexible(
-            child: IconButton(
-              icon: Icon(
-                Icons.skip_previous,
+                Icons.skip_previous_rounded,
                 color:
                     isSingleSong
                         ? Theme.of(
@@ -295,18 +284,22 @@ class _PlayerPageState extends ConsumerState<PlayerPage> {
                         ).colorScheme.onSurface.withValues(alpha: 0.3)
                         : null,
               ),
-              iconSize: isSmallScreen ? 40.0 : 48.0,
+              iconSize: isSmallScreen ? 32.0 : 36.0,
+              padding: const EdgeInsets.all(4),
               onPressed: isSingleSong ? null : service.playPrevious,
             ),
           ),
-          Flexible(
+          // 播放/暂停按钮 - 更大的尺寸
+          SizedBox(
+            width: 72,
             child: IconButton(
               icon: Icon(
                 state.isPlaying
                     ? Icons.pause_circle_filled
                     : Icons.play_circle_filled,
               ),
-              iconSize: isSmallScreen ? 60.0 : 72.0,
+              iconSize: isSmallScreen ? 56.0 : 64.0,
+              padding: EdgeInsets.zero,
               onPressed: () {
                 if (state.isPlaying) {
                   service.pause();
@@ -316,10 +309,12 @@ class _PlayerPageState extends ConsumerState<PlayerPage> {
               },
             ),
           ),
-          Flexible(
+          // 下一首按钮
+          SizedBox(
+            width: 48,
             child: IconButton(
               icon: Icon(
-                Icons.skip_next,
+                Icons.skip_next_rounded,
                 color:
                     isSingleSong
                         ? Theme.of(
@@ -327,8 +322,26 @@ class _PlayerPageState extends ConsumerState<PlayerPage> {
                         ).colorScheme.onSurface.withValues(alpha: 0.3)
                         : null,
               ),
-              iconSize: isSmallScreen ? 40.0 : 48.0,
+              iconSize: isSmallScreen ? 32.0 : 36.0,
+              padding: const EdgeInsets.all(4),
               onPressed: isSingleSong ? null : service.playNext,
+            ),
+          ),
+          // 收藏按钮
+          SizedBox(
+            width: 48,
+            child: IconButton(
+              icon: Icon(
+                Icons.favorite_border,
+                color: Theme.of(context).colorScheme.primary,
+              ),
+              iconSize: isSmallScreen ? 22.0 : 24.0,
+              padding: const EdgeInsets.all(8),
+              onPressed: () {
+                if (state.currentSong != null) {
+                  _showCollectDialog(context, ref, state.currentSong);
+                }
+              },
             ),
           ),
         ],

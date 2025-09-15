@@ -54,8 +54,25 @@ class PlaylistImportService {
     return null;
   }
 
-  // Imports a playlist from the given URL
-  Future<ImportedPlaylist?> importPlaylist(String playlistUrl) async {
+  // Extracts URL from share text (e.g., "分享歌单: 歌单名 创建者 https://music.163.com/...")
+  String _extractUrlFromText(String input) {
+    // First, try to find a URL in the text
+    final urlPattern = RegExp(r'https?://[^\s]+');
+    final match = urlPattern.firstMatch(input);
+
+    if (match != null) {
+      return match.group(0)!;
+    }
+
+    // If no URL found, assume the input itself is the URL
+    return input.trim();
+  }
+
+  // Imports a playlist from the given URL or share text
+  Future<ImportedPlaylist?> importPlaylist(String input) async {
+    // Extract URL from the input (handles both direct URLs and share text)
+    final playlistUrl = _extractUrlFromText(input);
+
     final playlistId = _extractPlaylistId(playlistUrl);
     if (playlistId == null) {
       throw Exception('Invalid playlist URL: Could not extract ID.');

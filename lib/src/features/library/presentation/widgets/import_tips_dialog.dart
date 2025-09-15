@@ -28,10 +28,10 @@ class _ImportTipsDialogState extends State<ImportTipsDialog> {
       subtitle: '点击分享按钮',
     ),
     _TipStep(
-      title: '复制链接',
+      title: '复制链接或分享文本',
       imagePath: 'lib/assets/images/import_tips/step3.jpg',
       description: '第3步',
-      subtitle: '点击复制链接',
+      subtitle: '复制链接或直接复制分享文本',
     ),
   ];
 
@@ -131,7 +131,7 @@ class _ImportTipsDialogState extends State<ImportTipsDialog> {
                   const SizedBox(height: 4),
                   Center(
                     child: Text(
-                      '方法1·分享到微信后复制链接',
+                      '支持直接粘贴分享文本',
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         color: Colors.grey[600],
                       ),
@@ -196,7 +196,7 @@ class _ImportTipsDialogState extends State<ImportTipsDialog> {
                     child: TextField(
                       controller: _urlController,
                       decoration: InputDecoration(
-                        hintText: '请粘贴歌单链接',
+                        hintText: '粘贴歌单链接或分享文本',
                         hintStyle: const TextStyle(fontSize: 14),
                         filled: true,
                         fillColor: Colors.grey[100],
@@ -223,7 +223,7 @@ class _ImportTipsDialogState extends State<ImportTipsDialog> {
                         final String playlistUrl = _urlController.text.trim();
                         if (playlistUrl.isEmpty) {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('请输入歌单链接')),
+                            const SnackBar(content: Text('请输入歌单链接或分享文本')),
                           );
                           return;
                         }
