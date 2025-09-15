@@ -176,6 +176,7 @@ class PlaybackService {
           _currentIndex = _predeterminedNextIndex;
           _predeterminedNextIndex = null; // 清空预设
         } else {
+          // 如果没有预确定的索引（不应该发生），生成一个
           _currentIndex = _getRandomIndex();
         }
       } else {
