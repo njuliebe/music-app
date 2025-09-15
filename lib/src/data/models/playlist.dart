@@ -1,4 +1,5 @@
 enum PlaylistType { created, collected }
+enum PlaylistSource { netease, qq }
 
 class Playlist {
   final int?
@@ -10,6 +11,8 @@ class Playlist {
   final String? creator;
   final PlaylistType type;
   final DateTime importTime; // Using DateTime for type safety
+  final String? originalUrl;
+  final PlaylistSource? source;
 
   Playlist({
     this.pkId,
@@ -20,6 +23,8 @@ class Playlist {
     this.creator,
     required this.type,
     required this.importTime,
+    this.originalUrl,
+    this.source,
   });
 
   factory Playlist.fromMap(Map<String, dynamic> map) {
@@ -34,6 +39,10 @@ class Playlist {
       importTime: DateTime.fromMillisecondsSinceEpoch(
         map['import_time'] as int,
       ),
+      originalUrl: map['original_url'] as String?,
+      source: map['source'] != null
+        ? PlaylistSource.values.firstWhere((e) => e.name == map['source'])
+        : null,
     );
   }
 
@@ -47,6 +56,8 @@ class Playlist {
       'creator': creator,
       'type': type.name,
       'import_time': importTime.millisecondsSinceEpoch,
+      'original_url': originalUrl,
+      'source': source?.name,
     };
   }
 }

@@ -71,6 +71,8 @@ class PlaylistRepository {
         coverUrl: null,
         creator: 'Imported',
         importTime: DateTime.now(), // Set the import time
+        originalUrl: importedPlaylist.originalUrl,
+        source: importedPlaylist.source,
       );
 
       // Since source_id is UNIQUE, `insert` with `replace` will work as an upsert.

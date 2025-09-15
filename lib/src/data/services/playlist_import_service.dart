@@ -7,26 +7,47 @@ class PlaylistImportService {
 
   PlaylistImportService(this._dio);
 
+  // Determines the source of the playlist from URL
+  PlaylistSource? _getPlaylistSource(String url) {
+    if (url.contains('music.163.com')) {
+      return PlaylistSource.netease;
+    } else if (url.contains('y.qq.com')) {
+      return PlaylistSource.qq;
+    }
+    return null;
+  }
+
   // Extracts playlist ID from a given URL
   String? _extractPlaylistId(String url) {
     final uri = Uri.tryParse(url);
     if (uri == null) return null;
 
-    // 1. Check the main query parameters
-    if (uri.queryParameters.containsKey('id')) {
-      return uri.queryParameters['id'];
-    }
+    final source = _getPlaylistSource(url);
 
-    // 2. Check the fragment
-    if (uri.hasFragment) {
-      String fragment = uri.fragment;
-      int queryStartIndex = fragment.indexOf('?');
-      if (queryStartIndex != -1) {
-        String queryString = fragment.substring(queryStartIndex + 1);
-        final queryParams = Uri.splitQueryString(queryString);
-        if (queryParams.containsKey('id')) {
-          return queryParams['id'];
+    if (source == PlaylistSource.netease) {
+      // 1. Check the main query parameters
+      if (uri.queryParameters.containsKey('id')) {
+        return uri.queryParameters['id'];
+      }
+
+      // 2. Check the fragment
+      if (uri.hasFragment) {
+        String fragment = uri.fragment;
+        int queryStartIndex = fragment.indexOf('?');
+        if (queryStartIndex != -1) {
+          String queryString = fragment.substring(queryStartIndex + 1);
+          final queryParams = Uri.splitQueryString(queryString);
+          if (queryParams.containsKey('id')) {
+            return queryParams['id'];
+          }
         }
+      }
+    } else if (source == PlaylistSource.qq) {
+      // QQ Music: https://y.qq.com/n/ryqq/playlist/7520334743
+      // Extract the ID from the path segments
+      final segments = uri.pathSegments;
+      if (segments.isNotEmpty) {
+        return segments.last;
       }
     }
 
@@ -38,6 +59,11 @@ class PlaylistImportService {
     final playlistId = _extractPlaylistId(playlistUrl);
     if (playlistId == null) {
       throw Exception('Invalid playlist URL: Could not extract ID.');
+    }
+
+    final source = _getPlaylistSource(playlistUrl);
+    if (source == null) {
+      throw Exception('Unsupported playlist source.');
     }
 
     final response = await _dio.post(
@@ -88,6 +114,8 @@ class PlaylistImportService {
           id: playlistId,
           name: name,
           songs: songs,
+          originalUrl: playlistUrl,
+          source: source,
         );
       } else {
         throw Exception('API error: ${jsonResponse['msg']}');
@@ -103,10 +131,14 @@ class ImportedPlaylist {
   final String id;
   final String name;
   final List<Song> songs;
+  final String originalUrl;
+  final PlaylistSource source;
 
   ImportedPlaylist({
     required this.id,
     required this.name,
     required this.songs,
+    required this.originalUrl,
+    required this.source,
   });
 }

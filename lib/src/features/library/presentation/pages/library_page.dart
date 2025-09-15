@@ -30,7 +30,8 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
   }
 
   void _onScroll() {
-    if (_scrollController.position.pixels >= _scrollController.position.maxScrollExtent - 200) {
+    if (_scrollController.position.pixels >=
+        _scrollController.position.maxScrollExtent - 200) {
       // Load next page when user is 200 pixels from the bottom
       ref.read(playlistsNotifierProvider.notifier).fetchNextPage();
     }
@@ -44,12 +45,12 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
       appBar: AppBar(
         title: const Text('我的音乐库'),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.add),
-            onPressed: () {
-              // TODO: Implement create playlist functionality
-            },
-          ),
+          // IconButton(
+          //   icon: const Icon(Icons.add),
+          //   onPressed: () {
+          //     // TODO: Implement create playlist functionality
+          //   },
+          // ),
           IconButton(
             icon: const Icon(Icons.cloud_download),
             onPressed: () {
@@ -60,37 +61,42 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
       ),
       body: RefreshIndicator(
         onRefresh: () => ref.read(playlistsNotifierProvider.notifier).refresh(),
-        child: Builder(builder: (context) {
-          if (playlistState.items.isEmpty && playlistState.isLoading) {
-            return const Center(child: CircularProgressIndicator());
-          } else if (playlistState.items.isEmpty && !playlistState.hasMore) {
-            return const Center(child: Text('没有找到任何歌单'));
-          } else {
-            return ListView.builder(
-              controller: _scrollController,
-              itemCount: playlistState.items.length + (playlistState.hasMore ? 1 : 0),
-              itemBuilder: (context, index) {
-                if (index == playlistState.items.length) {
-                  if (playlistState.isLoading) {
-                    return const Center(child: CircularProgressIndicator());
-                  } else {
-                    return const Center(
+        child: Builder(
+          builder: (context) {
+            if (playlistState.items.isEmpty && playlistState.isLoading) {
+              return const Center(child: CircularProgressIndicator());
+            } else if (playlistState.items.isEmpty && !playlistState.hasMore) {
+              return const Center(child: Text('没有找到任何歌单'));
+            } else {
+              return ListView.builder(
+                controller: _scrollController,
+                itemCount:
+                    playlistState.items.length +
+                    (playlistState.hasMore ? 1 : 0),
+                itemBuilder: (context, index) {
+                  if (index == playlistState.items.length) {
+                    if (playlistState.isLoading) {
+                      return const Center(child: CircularProgressIndicator());
+                    } else {
+                      return const Center(
                         child: Padding(
-                      padding: EdgeInsets.all(16.0),
-                      child: Text('没有更多歌单了'),
-                    ));
+                          padding: EdgeInsets.all(16.0),
+                          child: Text('没有更多歌单了'),
+                        ),
+                      );
+                    }
                   }
-                }
 
-                final playlist = playlistState.items[index];
-                // The UI for displaying playlists needs to be reconstructed as the original
-                // logic for separating created/collected is not suitable for pagination.
-                // For now, we will display them as a single list.
-                return PlaylistListItem(playlist: playlist);
-              },
-            );
-          }
-        }),
+                  final playlist = playlistState.items[index];
+                  // The UI for displaying playlists needs to be reconstructed as the original
+                  // logic for separating created/collected is not suitable for pagination.
+                  // For now, we will display them as a single list.
+                  return PlaylistListItem(playlist: playlist);
+                },
+              );
+            }
+          },
+        ),
       ),
     );
   }
@@ -105,9 +111,7 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
           title: const Text('导入歌单'),
           content: TextField(
             controller: _urlController,
-            decoration: const InputDecoration(
-              hintText: '请输入歌单链接',
-            ),
+            decoration: const InputDecoration(hintText: '请输入歌单链接'),
           ),
           actions: <Widget>[
             TextButton(
@@ -131,13 +135,21 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
 
                 try {
                   final importService = ref.read(playlistImportServiceProvider);
-                  final playlistRepository = ref.read(playlistRepositoryProvider);
-                  final importedPlaylist = await importService.importPlaylist(playlistUrl);
+                  final playlistRepository = ref.read(
+                    playlistRepositoryProvider,
+                  );
+                  final importedPlaylist = await importService.importPlaylist(
+                    playlistUrl,
+                  );
 
                   if (importedPlaylist != null) {
-                    await playlistRepository.saveImportedPlaylist(importedPlaylist);
+                    await playlistRepository.saveImportedPlaylist(
+                      importedPlaylist,
+                    );
                     scaffoldMessenger.showSnackBar(
-                      SnackBar(content: Text('歌单 "${importedPlaylist.name}" 导入成功！')),
+                      SnackBar(
+                        content: Text('歌单 "${importedPlaylist.name}" 导入成功！'),
+                      ),
                     );
                     ref.read(playlistsNotifierProvider.notifier).refresh();
                   } else {

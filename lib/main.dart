@@ -38,7 +38,7 @@ Future<void> main() async {
   // Open the database and prepare the instance
   final db = await openDatabase(
     join(await getDatabasesPath(), 'music_app.db'),
-    version: 5, // Incremented version to trigger onUpgrade
+    version: 6, // Incremented version to trigger onUpgrade
     onCreate: (db, version) async {
       await db.execute('''
         CREATE TABLE playlists (
@@ -49,7 +49,9 @@ Future<void> main() async {
           coverUrl TEXT,
           creator TEXT,
           type TEXT NOT NULL,
-          import_time INTEGER NOT NULL
+          import_time INTEGER NOT NULL,
+          original_url TEXT,
+          source TEXT
         )
       ''');
       await db.execute('''
@@ -68,7 +70,7 @@ Future<void> main() async {
       // This is a simple migration strategy that DROPS and RECREATES tables.
       // All existing data will be lost. For a production app, a more
       // sophisticated data migration strategy would be required.
-      if (oldVersion < 5) {
+      if (oldVersion < 6) {
         await db.execute('DROP TABLE IF EXISTS playlists');
         await db.execute('DROP TABLE IF EXISTS playlist_songs');
         await db.execute('DROP TABLE IF EXISTS songs'); // Also drop legacy songs table
@@ -83,7 +85,9 @@ Future<void> main() async {
             coverUrl TEXT,
             creator TEXT,
             type TEXT NOT NULL,
-            import_time INTEGER NOT NULL
+            import_time INTEGER NOT NULL,
+            original_url TEXT,
+            source TEXT
           )
         ''');
         await db.execute('''
