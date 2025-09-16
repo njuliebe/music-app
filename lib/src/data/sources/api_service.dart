@@ -4,10 +4,10 @@ class ApiService {
   final Dio _dio;
 
   ApiService(this._dio) {
-    _dio.options.baseUrl = 'http://tangdou.space:58000';
+    _dio.options.baseUrl = '';
     _dio.options.connectTimeout = const Duration(seconds: 50);
     _dio.options.receiveTimeout = const Duration(seconds: 50);
-    _dio.options.headers['Authorization'] = 'Bearer 123567';
+    _dio.options.headers['Authorization'] = '';
     _dio.options.headers['Content-Type'] = 'application/json';
   }
 
@@ -27,10 +27,7 @@ class ApiService {
 
   Future<Map<String, dynamic>> getSongDetail(String href) async {
     try {
-      final response = await _dio.post(
-        '/music/detail',
-        data: {'href': href},
-      );
+      final response = await _dio.post('/music/detail', data: {'href': href});
       return response.data as Map<String, dynamic>;
     } catch (e) {
       // Handle error

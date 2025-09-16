@@ -206,6 +206,8 @@ flutter build macos
 - [Flutter](https://flutter.dev/) - 跨平台UI框架
 - [just_audio](https://pub.dev/packages/just_audio) - 音频播放支持
 - [Riverpod](https://riverpod.dev/) - 状态管理方案
+- [GD music](https://music.gdstudio.xyz/) - 音乐资源获取
+- [unmeta](https://music.unmeta.cn/) - 歌单管理
 - 所有贡献者和用户的支持
 
 ## 📮 联系方式
