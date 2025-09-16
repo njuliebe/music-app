@@ -36,8 +36,8 @@
 ## 🚀 快速开始
 
 ### 环境要求
-- Flutter SDK: >=3.0.0
-- Dart SDK: >=3.0.0
+- Flutter SDK: >=3.35.3
+- Dart SDK: >=3.7.0
 - Android Studio / Xcode (用于移动端开发)
 
 ### 安装步骤
