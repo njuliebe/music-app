@@ -213,7 +213,7 @@ flutter build macos
 ## 📮 联系方式
 
 - 问题反馈：[GitHub Issues](https://github.com/yourusername/music_app/issues)
-- 邮箱：njuliebei@gmail.com
+- 邮箱：njuliebe@gmail.com
 
 ---
 
