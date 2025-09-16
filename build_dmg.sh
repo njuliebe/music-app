@@ -30,7 +30,11 @@ fi
 APP_NAME="music_app"
 DMG_NAME="MusicX-macOS"
 APP_PATH="build/macos/Build/Products/Release/${APP_NAME}.app"
-OUTPUT_DMG="${DMG_NAME}.dmg"
+OUTPUT_DIR="build/dmg"
+OUTPUT_DMG="${OUTPUT_DIR}/${DMG_NAME}.dmg"
+
+# Create output directory if it doesn't exist
+mkdir -p "$OUTPUT_DIR"
 
 # Remove old DMG if exists
 if [ -f "$OUTPUT_DMG" ]; then
