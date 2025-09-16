@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:music_app/src/shared/theme/app_theme.dart';
 
 class ImportTipsDialog extends StatefulWidget {
   final VoidCallback onComplete;
@@ -12,26 +13,25 @@ class ImportTipsDialog extends StatefulWidget {
 class _ImportTipsDialogState extends State<ImportTipsDialog> {
   final ScrollController _scrollController = ScrollController();
   final TextEditingController _urlController = TextEditingController();
-  bool _imagesLoaded = false;
 
   final List<_TipStep> _steps = [
     _TipStep(
-      title: '进入音乐App歌单',
+      title: '打开歌单',
       imagePath: 'lib/assets/images/import_tips/step1.jpg',
       description: '第1步',
-      subtitle: '进入音乐App歌单页面',
+      subtitle: '打开歌单',
     ),
     _TipStep(
-      title: '点击分享按钮',
+      title: '分享歌单',
       imagePath: 'lib/assets/images/import_tips/step2.jpg',
       description: '第2步',
-      subtitle: '点击分享按钮',
+      subtitle: '分享歌单',
     ),
     _TipStep(
-      title: '复制链接或分享文本',
+      title: '复制链接',
       imagePath: 'lib/assets/images/import_tips/step3.jpg',
       description: '第3步',
-      subtitle: '复制链接或直接复制分享文本',
+      subtitle: '复制链接',
     ),
   ];
 
@@ -48,11 +48,6 @@ class _ImportTipsDialogState extends State<ImportTipsDialog> {
       } catch (e) {
         debugPrint('Failed to preload image ${step.imagePath}: $e');
       }
-    }
-    if (mounted) {
-      setState(() {
-        _imagesLoaded = true;
-      });
     }
   }
 
@@ -75,7 +70,7 @@ class _ImportTipsDialogState extends State<ImportTipsDialog> {
         ),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(20),
-          color: const Color(0xFFE8F5F3),
+          color: AppTheme.backgroundCard,
         ),
         child: Scaffold(
           backgroundColor: Colors.transparent,
@@ -89,9 +84,12 @@ class _ImportTipsDialogState extends State<ImportTipsDialog> {
                   const SizedBox(width: 48),
                   Expanded(
                     child: Text(
-                      '歌单导入',
+                      '导入歌单',
                       textAlign: TextAlign.center,
-                      style: Theme.of(context).textTheme.titleLarge,
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        color: AppTheme.textPrimary,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
                   IconButton(
@@ -107,37 +105,18 @@ class _ImportTipsDialogState extends State<ImportTipsDialog> {
                 shrinkWrap: false,
                 padding: EdgeInsets.zero,
                 children: [
-                  // Tab indicators
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        _buildTabButton('链接导入', true),
-                        const SizedBox(width: 16),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 16),
                   // Title
                   Center(
                     child: Text(
-                      '复制内容链接',
+                      '导入步骤',
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
+                        color: AppTheme.textPrimary,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                   ),
-                  const SizedBox(height: 4),
-                  Center(
-                    child: Text(
-                      '支持直接粘贴分享文本',
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: Colors.grey[600],
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 16),
                   // Horizontal scrollable steps
                   SizedBox(
                     height: 260,
@@ -152,44 +131,38 @@ class _ImportTipsDialogState extends State<ImportTipsDialog> {
                     ),
                   ),
                   const SizedBox(height: 8),
-                  // Step indicators
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: List.generate(
-                      _steps.length,
-                      (index) => Container(
-                        margin: const EdgeInsets.symmetric(horizontal: 4),
-                        width: 8,
-                        height: 8,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: Colors.grey[400],
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 16),
                 ],
               ),
             ),
             // Bottom section with input (non-scrollable)
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: AppTheme.backgroundElevated,
                 borderRadius: const BorderRadius.only(
                   bottomLeft: Radius.circular(20),
                   bottomRight: Radius.circular(20),
+                ),
+                border: Border(
+                  top: BorderSide(
+                    color: AppTheme.divider.withValues(alpha: 0.3),
+                    width: 1,
+                  ),
                 ),
               ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Text(
-                    '第2步  将链接粘贴到下方',
-                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                  Text(
+                    '粘贴链接或分享文本',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: AppTheme.textPrimary,
+                    ),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 10),
                   // URL Input field
                   SizedBox(
                     height: 40,
@@ -197,20 +170,20 @@ class _ImportTipsDialogState extends State<ImportTipsDialog> {
                       controller: _urlController,
                       decoration: InputDecoration(
                         hintText: '粘贴歌单链接或分享文本',
-                        hintStyle: const TextStyle(fontSize: 14),
+                        hintStyle: TextStyle(fontSize: 14, color: AppTheme.textHint),
                         filled: true,
-                        fillColor: Colors.grey[100],
+                        fillColor: AppTheme.backgroundCard,
                         border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
+                          borderRadius: BorderRadius.circular(12),
                           borderSide: BorderSide.none,
                         ),
                         contentPadding: const EdgeInsets.symmetric(
                           horizontal: 12,
                           vertical: 8,
                         ),
-                        prefixIcon: Icon(Icons.link, color: Colors.grey[600], size: 20),
+                        prefixIcon: Icon(Icons.link, color: AppTheme.textSecondary, size: 20),
                       ),
-                      style: const TextStyle(fontSize: 14),
+                      style: TextStyle(fontSize: 14, color: AppTheme.textPrimary),
                       maxLines: 1,
                     ),
                   ),
@@ -231,10 +204,10 @@ class _ImportTipsDialogState extends State<ImportTipsDialog> {
                         Navigator.of(context).pop(playlistUrl);
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.pink[300],
+                        backgroundColor: AppTheme.accentPurple,
                         padding: EdgeInsets.zero,
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(20),
+                          borderRadius: BorderRadius.circular(12),
                         ),
                       ),
                       child: const Text(
@@ -247,33 +220,11 @@ class _ImportTipsDialogState extends State<ImportTipsDialog> {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 4),
                 ],
               ),
             ),
             ],
           ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildTabButton(String label, bool isActive) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      decoration: BoxDecoration(
-        border: Border(
-          bottom: BorderSide(
-            color: isActive ? Colors.red : Colors.transparent,
-            width: 2,
-          ),
-        ),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(
-          color: isActive ? Colors.black : Colors.grey,
-          fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
         ),
       ),
     );
@@ -299,7 +250,11 @@ class _ImportTipsDialogState extends State<ImportTipsDialog> {
                   height: 26,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: Theme.of(context).primaryColor,
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [AppTheme.accentPurple, AppTheme.accentBlue],
+                    ),
                   ),
                   child: Center(
                     child: Text(
@@ -316,9 +271,10 @@ class _ImportTipsDialogState extends State<ImportTipsDialog> {
                 Expanded(
                   child: Text(
                     step.subtitle ?? step.title,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
+                      color: AppTheme.textPrimary,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -333,14 +289,11 @@ class _ImportTipsDialogState extends State<ImportTipsDialog> {
             child: Container(
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(16),
-                color: Colors.white,
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.08),
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
+                color: AppTheme.backgroundElevated,
+                border: Border.all(
+                  color: AppTheme.divider.withValues(alpha: 0.3),
+                  width: 1,
+                ),
               ),
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(16),
@@ -351,7 +304,7 @@ class _ImportTipsDialogState extends State<ImportTipsDialog> {
                   errorBuilder: (context, error, stackTrace) {
                     debugPrint('Error loading image ${step.imagePath}: $error');
                     return Container(
-                      color: Colors.grey[100],
+                      color: AppTheme.backgroundCard,
                       child: Center(
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
@@ -359,13 +312,13 @@ class _ImportTipsDialogState extends State<ImportTipsDialog> {
                             Icon(
                               Icons.image_not_supported,
                               size: 40,
-                              color: Colors.grey[400],
+                              color: AppTheme.textSecondary,
                             ),
                             const SizedBox(height: 12),
                             Text(
                               step.description,
                               style: TextStyle(
-                                color: Colors.grey[600],
+                                color: AppTheme.textSecondary,
                                 fontSize: 14,
                                 fontWeight: FontWeight.w500,
                               ),

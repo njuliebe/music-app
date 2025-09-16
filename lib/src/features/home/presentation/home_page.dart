@@ -15,27 +15,10 @@ class HomePage extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              const SizedBox(height: 40),
+              const SizedBox(height: 20),
               // 主Logo展示
-              const Center(child: AppLogo(size: 120, showText: true)),
-              const SizedBox(height: 60),
-
-              // 欢迎文字
-              Text(
-                '欢迎使用 MusicX',
-                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                  color: AppTheme.textPrimary,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 12),
-              Text(
-                '探索无限音乐世界',
-                style: Theme.of(
-                  context,
-                ).textTheme.bodyLarge?.copyWith(color: AppTheme.textSecondary),
-              ),
-              const SizedBox(height: 40),
+              const Center(child: AppLogo(size: 100, showText: true)),
+              const SizedBox(height: 30),
 
               // 功能卡片
               _buildFeatureCard(
@@ -45,7 +28,7 @@ class HomePage extends StatelessWidget {
                 description: '快速找到你喜欢的音乐',
                 gradient: [AppTheme.accentPurple, AppTheme.accentBlue],
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 12),
               _buildFeatureCard(
                 context,
                 icon: Icons.library_music_rounded,
@@ -53,7 +36,7 @@ class HomePage extends StatelessWidget {
                 description: '轻松导入和管理你的歌单',
                 gradient: [AppTheme.accentBlue, AppTheme.accentPurple],
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 12),
               _buildFeatureCard(
                 context,
                 icon: Icons.lyrics_rounded,
@@ -62,7 +45,7 @@ class HomePage extends StatelessWidget {
                 gradient: [AppTheme.accentPurple, AppTheme.primaryMedium],
               ),
 
-              const SizedBox(height: 40),
+              const SizedBox(height: 20),
 
               // Logo变体展示
               // Container(
@@ -106,7 +89,7 @@ class HomePage extends StatelessWidget {
     required List<Color> gradient,
   }) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: AppTheme.backgroundCard,
         borderRadius: BorderRadius.circular(16),
@@ -118,8 +101,8 @@ class HomePage extends StatelessWidget {
       child: Row(
         children: [
           Container(
-            width: 48,
-            height: 48,
+            width: 44,
+            height: 44,
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 begin: Alignment.topLeft,
@@ -128,7 +111,7 @@ class HomePage extends StatelessWidget {
               ),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: Icon(icon, color: Colors.white, size: 24),
+            child: Icon(icon, color: Colors.white, size: 22),
           ),
           const SizedBox(width: 16),
           Expanded(
@@ -139,16 +122,16 @@ class HomePage extends StatelessWidget {
                   title,
                   style: const TextStyle(
                     color: AppTheme.textPrimary,
-                    fontSize: 16,
+                    fontSize: 15,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 2),
                 Text(
                   description,
                   style: const TextStyle(
                     color: AppTheme.textSecondary,
-                    fontSize: 13,
+                    fontSize: 12,
                   ),
                 ),
               ],
