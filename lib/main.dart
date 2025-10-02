@@ -1,8 +1,15 @@
 import 'dart:io';
+import 'package:audio_service/audio_service.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:music_app/src/data/models/playlist.dart';
+import 'package:dio/dio.dart';
+import 'package:music_app/src/core/services/audio_handler.dart';
+import 'package:music_app/src/core/services/playback_service.dart';
+import 'package:music_app/src/data/providers.dart';
+import 'package:music_app/src/data/repositories/music_repository.dart';
+import 'package:music_app/src/data/sources/gd_api_service.dart';
+import 'package:music_app/src/features/lyrics/data/lyric_repository.dart';
 import 'package:music_app/src/data/repositories/playlist_repository.dart';
 import 'package:music_app/src/shared/shell/main_scaffold.dart';
 import 'package:music_app/src/shared/theme/app_theme.dart';
@@ -25,9 +32,32 @@ final playlistRepositoryProvider = Provider<PlaylistRepository>((ref) {
 
 
 
+
 Future<void> main() async {
   // --- CENTRALIZED INITIALIZATION ---
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Initialize audio service for media controls
+  late final MusicAudioHandler? audioHandler;
+  if (!kIsWeb) {
+    // Create the playback service first
+    final musicRepository = ApiMusicRepository(GdApiService(Dio()));
+    final lyricRepository = LyricRepository(Dio());
+    final playbackService = PlaybackService(musicRepository, lyricRepository);
+
+    // Initialize audio service with our handler
+    audioHandler = await AudioService.init(
+      builder: () => MusicAudioHandler(playbackService),
+      config: const AudioServiceConfig(
+        androidNotificationChannelId: 'com.example.music_app.channel.audio',
+        androidNotificationChannelName: 'Music playback',
+        androidNotificationOngoing: true,
+        androidShowNotificationBadge: false,
+      ),
+    );
+  } else {
+    audioHandler = null;
+  }
 
   // FFI init for desktop
   if (!kIsWeb && Platform.isWindows || Platform.isLinux) {
@@ -106,10 +136,25 @@ Future<void> main() async {
   );
   // --- END OF INITIALIZATION ---
 
+  // Create overrides list
+  final overrides = <Override>[
+    databaseProvider.overrideWithValue(db),
+  ];
+
+  // Add audio handler override only for non-web platforms
+  if (!kIsWeb && audioHandler != null) {
+    overrides.add(
+      audioHandlerProvider.overrideWithValue(audioHandler),
+    );
+    overrides.add(
+      playbackServiceProvider.overrideWithValue(audioHandler.playbackService),
+    );
+  }
+
   runApp(
     ProviderScope(
-      // Override the provider with the REAL, initialized database instance.
-      overrides: [databaseProvider.overrideWithValue(db)],
+      // Override the providers with the REAL, initialized instances.
+      overrides: overrides,
       child: const MyApp(),
     ),
   );

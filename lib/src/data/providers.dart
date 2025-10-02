@@ -1,12 +1,15 @@
+import 'package:audio_service/audio_service.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
+import 'package:music_app/src/core/services/audio_handler.dart';
+import 'package:music_app/src/core/services/playback_service.dart';
 import 'package:music_app/src/data/models/playlist.dart';
 import 'package:music_app/src/data/repositories/music_repository.dart';
 import 'package:music_app/src/data/repositories/playlist_repository.dart';
 import 'package:music_app/src/data/sources/api_service.dart';
 import 'package:music_app/src/data/services/playlist_import_service.dart'; // Import the new service
 import 'package:music_app/src/data/sources/gd_api_service.dart';
+import 'package:music_app/src/features/lyrics/data/lyric_repository.dart';
 import 'package:sqflite/sqflite.dart';
 
 /// A provider that creates an instance of [Dio].
@@ -35,4 +38,22 @@ final musicRepositoryProvider = Provider<MusicRepository>((ref) {
 final playlistImportServiceProvider = Provider<PlaylistImportService>((ref) {
   final dio = ref.watch(dioProvider);
   return PlaylistImportService(dio);
+});
+
+/// A provider for the lyric repository
+final lyricRepositoryProvider = Provider<LyricRepository>((ref) {
+  final dio = ref.watch(dioProvider);
+  return LyricRepository(dio);
+});
+
+/// A provider for the playback service
+final playbackServiceProvider = Provider<PlaybackService>((ref) {
+  final musicRepository = ref.watch(musicRepositoryProvider);
+  final lyricRepository = ref.watch(lyricRepositoryProvider);
+  return PlaybackService(musicRepository, lyricRepository);
+});
+
+/// A provider for the audio handler (injected from main)
+final audioHandlerProvider = Provider<MusicAudioHandler>((ref) {
+  throw UnimplementedError('AudioHandler must be overridden in main');
 });

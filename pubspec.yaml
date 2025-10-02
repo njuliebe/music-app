@@ -40,6 +40,7 @@ dependencies:
   dio: ^5.4.3+1
   # Audio
   just_audio: ^0.9.38
+  audio_service: ^0.18.15
   # Database
   sqflite: ^2.3.3+1
   path: ^1.9.0

@@ -1,8 +1,7 @@
 import 'package:dio/dio.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:music_app/src/features/lyrics/domain/lyric.dart';
 
-final lyricRepositoryProvider = Provider((ref) => LyricRepository(Dio()));
+// lyricRepositoryProvider is now defined in data/providers.dart
 
 class LyricRepository {
   LyricRepository(this._dio);
