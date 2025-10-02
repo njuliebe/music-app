@@ -198,6 +198,11 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
       final importedPlaylist = await importService.importPlaylist(playlistUrl);
 
       if (importedPlaylist != null) {
+        print('DEBUG: Imported playlist name: "${importedPlaylist.name}"');
+        print('DEBUG: Imported playlist songs count: ${importedPlaylist.songs.length}');
+        if (importedPlaylist.songs.isNotEmpty) {
+          print('DEBUG: First song: "${importedPlaylist.songs.first.title}" by ${importedPlaylist.songs.first.artist}');
+        }
         await playlistRepository.saveImportedPlaylist(importedPlaylist);
         scaffoldMessenger.showSnackBar(
           SnackBar(

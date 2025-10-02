@@ -16,6 +16,10 @@ class PlaylistRepository {
       limit: pageSize,
       offset: (page - 1) * pageSize,
     );
+    print('DEBUG: Found ${maps.length} playlists in database');
+    if (maps.isNotEmpty) {
+      print('DEBUG: First playlist data: ${maps.first}');
+    }
     return List.generate(maps.length, (i) {
       return Playlist.fromMap(maps[i]);
     });
