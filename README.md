@@ -15,12 +15,9 @@
 ## ✨ 功能特性
 ### 功能界面
 
-<center>
-![WechatIMG129](https://github.com/user-attachments/assets/ad38fd9a-475c-4b74-9615-a18e78d14bec)
-![WechatIMG128](https://github.com/user-attachments/assets/3c022752-c69f-430d-ad55-15180de95bc0)
-![WechatIMG127](https://github.com/user-attachments/assets/3b6c8817-bb9b-49f0-837d-f0f269747844)
-![WechatIMG126](https://github.com/user-attachments/assets/79c2e463-d573-4aeb-9e64-14e6ebc30d4a)
-</center>
+
+![WechatIMG129](https://github.com/user-attachments/assets/ad38fd9a-475c-4b74-9615-a18e78d14bec)![WechatIMG128](https://github.com/user-attachments/assets/3c022752-c69f-430d-ad55-15180de95bc0)![WechatIMG127](https://github.com/user-attachments/assets/3b6c8817-bb9b-49f0-837d-f0f269747844)![WechatIMG126](https://github.com/user-attachments/assets/79c2e463-d573-4aeb-9e64-14e6ebc30d4a)
+
 
 ### 🎵 核心功能
 - **智能搜索** - 快速搜索并播放喜欢的音乐
